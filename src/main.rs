@@ -4,6 +4,7 @@ use structures::Commit;
 const COMMIT_LINE: &[u8; 6] = &[99, 111, 109, 109, 105, 116];
 
 mod structures {
+    #[derive(Debug)]
     pub struct Commit {
         pub author: String,
         pub date: u128,
@@ -11,13 +12,24 @@ mod structures {
     }
 
     impl Commit {
-        pub fn new_from_all(author_line: &[u8], date_line: &[u8],
-            hash_line:&[u8]) -> Commit {
+        pub fn new_from_all(
+            hash_line:&[u8],
+            author_line: &[u8],
+            date_line: &[u8]) -> Commit {
+
+            // split hash line into commit and hash
+            let (_ , hash): (_ , &[u8]) = hash_line.split_at(7);
+
+            let email = author_line
+                .rsplit(|byte| *byte == 60 as u8 || *byte == 62 as u8)
+                .take(2)
+                .last()
+                .unwrap();
 
             return Commit {
-                author: String::from(""),
+                author: String::from_utf8(email.to_vec()).unwrap(),
                 date: 0,
-                hash: String::from(""),
+                hash: String::from_utf8(hash.to_vec()).unwrap(),
             }
         }
     }
@@ -25,7 +37,6 @@ mod structures {
 
 fn main() {
     let mut commits: Vec<Commit> = vec!();
-    let mut commit_header_found: bool = false;
     match std::env::consts::FAMILY {
         "unix" => {
 
@@ -42,13 +53,16 @@ fn main() {
                 let line = lines.next().unwrap();
                 let commit_text = line.get(0..6).unwrap_or(&[]);
                 if commit_text == COMMIT_LINE {
-                    println!("{:?}", String::from_utf8(line.to_vec()));
-                    println!("author {:?}", String::from_utf8(lines.next().unwrap().to_vec()));
-                    println!("date {:?}", String::from_utf8(lines.next().unwrap().to_vec()));
+                    commits.push(Commit::new_from_all(line,
+                        lines.next().unwrap(),
+                        lines.next().unwrap()));
                 }
             }
 
             println!("number of commits {:?}", commits.len());
+            for commit in commits {
+                println!("{:?}", commit);
+            }
         },
         "windows" => {
             println!("not supported yet")
