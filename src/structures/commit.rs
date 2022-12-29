@@ -1,9 +1,6 @@
-use chrono::naive::NaiveDate;
-
 #[derive(Debug)]
 pub struct Commit {
     pub author: String,
-    pub date: NaiveDate, // possibly use long format from git log
     pub hash: String,
     pub date_unix: u32,
 }
@@ -28,18 +25,16 @@ impl Commit {
         let (_, date_slice): (_, &[u8]) = date_line
             .split_at(8);
 
-        // create a string from it
-        let date_string = String::from_utf8(date_slice.to_vec()).unwrap();
-
-        // create a naive date using the format of default git log
-        let date: NaiveDate = NaiveDate::parse_from_str(&date_string,
-            "%a %b %d %H:%M:%S %Y %z") .unwrap();
+        // create a string from it and parse into u32
+        let date_unix: u32 = String::from_utf8(date_slice.to_vec())
+            .unwrap()
+            .parse()
+            .unwrap();
 
         return Commit {
             author: String::from_utf8(email.to_vec()).unwrap(),
-            date,
             hash: String::from_utf8(hash.to_vec()).unwrap(),
-            date_unix: 40,
+            date_unix,
         }
     }
 }

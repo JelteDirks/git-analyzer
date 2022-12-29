@@ -12,7 +12,7 @@ fn main() {
 
             // execute git log in the current directory
             let output = Command::new("sh")
-                .args(["-c", "git log -p"])
+                .args(["-c", "git log -p --date=unix"])
                 .output()
                 .expect("nuts");
 
