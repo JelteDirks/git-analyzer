@@ -3,6 +3,28 @@ mod structures;
 use std::process::Command;
 use structures::commit::Commit;
 
+
+// need to rewrite because this is not supporting multi threading really well
+//
+// 1) use input from git log to analyze the repo, pipe this into the program
+// so that the user can select their own commits based on git log
+//
+// 2) Distribute the commit hashes over a number of threads to analyze those 
+// commits independent of the main thread.
+//
+// 3) Use the analyzed aggregated data to improve show stuff to the user
+//
+// 4) use an optional setting where the use can just analyze the entire repo,
+// using the following formatting for logging
+
+// formatting
+// git log --format="%H %ct %ae"
+//
+// %H is the long hash
+// %ct is commit date
+// %ae is the author email
+//
+
 const COMMIT_LINE: &[u8; 6] = &[99, 111, 109, 109, 105, 116];
 
 fn main() {
@@ -44,7 +66,7 @@ fn main() {
             println!("not supported yet")
         }
         _ => {
-            println!("wtf is even that")
+            println!("not unix / windows")
         }
     }
 }
