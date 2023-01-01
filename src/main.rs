@@ -36,6 +36,7 @@ fn main() {
                 .output()
                 .expect("nuts");
 
+            // process the output of the default logging
             process_git_hashes(output.stdout.as_slice(), &mut commits);
 
         },
@@ -50,6 +51,11 @@ fn main() {
 
 fn process_git_hashes(hash_list: &[u8], commit_vec: &mut Vec<Commit>) {
     for line in hash_list.split(|&byte| byte == 10) {
+        if line.len() < 42 { // commit hash is at least 40 characters
+            // too short to be a valid commit to be investigated
+            continue;
+        }
+        // dirty pushing, should be properly checked
         commit_vec.push(Commit::new_from_preformat(line));
     }
 }
