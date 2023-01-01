@@ -1,8 +1,7 @@
 mod structures;
 
+use crate::structures::commit::Commit;
 use std::process::Command;
-use structures::commit::Commit;
-
 
 // need to rewrite because this is not supporting multi threading really well
 //
@@ -23,9 +22,9 @@ use structures::commit::Commit;
 // %H is the long hash
 // %ct is commit date
 // %ae is the author email
-//
 
 fn main() {
+    // 1 git log with preformatted lines
     let mut commits: Vec<Commit> = vec!();
     match std::env::consts::FAMILY {
         "unix" => {
@@ -37,7 +36,7 @@ fn main() {
                 .expect("nuts");
 
             // process the output of the default logging
-            process_git_hashes(output.stdout.as_slice(), &mut commits);
+            create_commit_structs(output.stdout.as_slice(), &mut commits);
 
         },
         "windows" => {
@@ -49,7 +48,12 @@ fn main() {
     }
 }
 
-fn process_git_hashes(hash_list: &[u8], commit_vec: &mut Vec<Commit>) {
+fn analyze_commit(commit: &mut Commit) {
+    println!("{:?}", commit);
+}
+
+
+fn create_commit_structs(hash_list: &[u8], commit_vec: &mut Vec<Commit>) {
     for line in hash_list.split(|&byte| byte == 10) {
         if line.len() < 42 { // commit hash is at least 40 characters
             // too short to be a valid commit to be investigated
