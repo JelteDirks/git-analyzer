@@ -5,7 +5,6 @@ pub struct Commit {
     pub author: String,
     pub hash: String,
     pub date_unix: u32,
-    pub analytics: Option<Vec<Analytic>>,
 }
 
 impl Commit {
@@ -35,7 +34,6 @@ impl Commit {
             author: author_email_string.into(),
             hash: hash_string.into(),
             date_unix: date_long,
-            analytics: None,
         }
     }
 

@@ -1,7 +1,10 @@
 mod structures;
 
 use crate::structures::commit::Commit;
+use crate::structures::analytics::{Analytic, Language};
 use std::process::Command;
+use std::sync::{Mutex, Arc};
+use std::thread::JoinHandle;
 
 // need to rewrite because this is not supporting multi threading really well
 //
@@ -25,7 +28,8 @@ use std::process::Command;
 
 fn main() {
     // 1 git log with preformatted lines
-    let mut commits: Vec<Commit> = vec!();
+    let mut commits: Vec<Commit> = Vec::new();
+
     match std::env::consts::FAMILY {
         "unix" => {
 
@@ -46,9 +50,35 @@ fn main() {
             println!("not unix / windows")
         }
     }
+
+    let n_commits: usize = commits.len();
+
+    let analytics: Arc<Mutex<Vec<Analytic>>> = Arc::new(Mutex::new(
+        Vec::with_capacity(n_commits)));
+
+    let mut join_handles: Vec<JoinHandle<()>> = Vec::with_capacity(n_commits);
+
+    for commit in commits {
+        let cloned_analytic = Arc::clone(&analytics);
+
+        let handle = std::thread::spawn(move || {
+            analyze_commit(&commit, cloned_analytic)
+        });
+
+        join_handles.push(handle);
+    }
+
+    for h in join_handles {
+        h.join().unwrap();
+    }
+
+    for a in analytics.lock().unwrap().iter() {
+        println!("{:?}", a);
+    }
 }
 
-fn analyze_commit(commit: &mut Commit) {
+fn analyze_commit(commit: &Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
+    let mut Analytic = Analytic::with_language(Language::Go);
     println!("{:?}", commit);
 }
 
