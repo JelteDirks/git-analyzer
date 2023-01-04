@@ -1,7 +1,7 @@
 mod structures;
 
 use crate::structures::commit::Commit;
-use crate::structures::analytics::{Analytic, Language};
+use crate::structures::analytics::Analytic;
 use std::process::Command;
 use std::sync::{Mutex, Arc};
 use std::thread::JoinHandle;
@@ -59,10 +59,10 @@ fn main() {
     let mut join_handles: Vec<JoinHandle<()>> = Vec::with_capacity(n_commits);
 
     for commit in commits {
-        let cloned_analytic = Arc::clone(&analytics);
+        let cloned_analytics = Arc::clone(&analytics);
 
         let handle = std::thread::spawn(move || {
-            analyze_commit(&commit, cloned_analytic)
+            analyze_commit(commit, cloned_analytics)
         });
 
         join_handles.push(handle);
@@ -77,9 +77,15 @@ fn main() {
     }
 }
 
-fn analyze_commit(commit: &Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
-    let mut Analytic = Analytic::with_language(Language::Go);
-    println!("{:?}", commit);
+fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
+    let program = "git show ".to_owned() + &commit.hash;
+
+    let output = Command::new("sh")
+        .args(["-c", &program])
+        .output()
+        .expect("git show execution did not go as planned");
+
+    println!("{:?}", output);
 }
 
 

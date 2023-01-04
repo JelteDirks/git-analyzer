@@ -1,25 +1,18 @@
 #[derive(Debug)]
 pub struct Analytic {
-    language: Language,
-    additions: u32,
-    deletions: u32,
+    pub extension: String,
+    pub additions: u32,
+    pub deletions: u32,
+    pub author: Option<String>,
 }
 
 impl Analytic {
-    pub fn with_language(language: Language) -> Analytic {
+    pub fn with_extension(extension: String) -> Analytic {
         return Analytic {
-            language,
+            author: None,
+            extension,
             additions: 0,
             deletions: 0,
         };
     }
-}
-
-#[derive(Debug)]
-pub enum Language {
-    C,
-    Go,
-    JavaScript,
-    TypeScript,
-    Rust,
 }
