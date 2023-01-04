@@ -85,7 +85,38 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
         .output()
         .expect("git show execution did not go as planned");
 
-    println!("{:?}", output);
+    let lines = output.stdout.split(|&byte| byte == 10);
+
+    // byte slice that spells: "diff --git"
+    const DIFF_LINE: [u8; 10] = [100, 105, 102, 102, 32, 45, 45, 103, 105, 116];
+
+    let mut state: StateMachine = StateMachine::SearchingDiff;
+
+    for line in lines {
+        match state {
+            StateMachine::SearchingDiff => {
+                let diff_comparison_slice = line.get(0..10);
+                if diff_comparison_slice.is_some() {
+                    if diff_comparison_slice.unwrap() == &DIFF_LINE {
+                        println!("{:?}", String::from_utf8(line.to_owned()));
+                    }
+                }
+            },
+            StateMachine::SearchingPlusFile => {
+            },
+            StateMachine::SearchingMinFile => {
+            },
+            StateMachine::SearchingChanges => {
+            },
+        }
+    }
+}
+
+enum StateMachine {
+    SearchingDiff,
+    SearchingMinFile,
+    SearchingPlusFile,
+    SearchingChanges,
 }
 
 
