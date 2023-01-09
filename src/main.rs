@@ -26,6 +26,15 @@ use std::thread::JoinHandle;
 // %ct is commit date
 // %ae is the author email
 
+// byte slice that spells: "diff --git"
+const DIFF_LINE: [u8; 10] = [100, 105, 102, 102, 32, 45, 45, 103, 105, 116];
+
+// byte slice for "--- "
+const MIN_LINE: [u8; 4] = [45, 45, 45, 32];
+
+// byte slice for "+++ "
+const PLUS_LINE: [u8; 4] = [43, 43, 43, 32];
+
 fn main() {
     // 1 git log with preformatted lines
     let mut commits: Vec<Commit> = Vec::new();
@@ -77,6 +86,7 @@ fn main() {
     }
 }
 
+
 fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
     let program = "git show ".to_owned() + &commit.hash;
 
@@ -87,26 +97,71 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
 
     let lines = output.stdout.split(|&byte| byte == 10);
 
-    // byte slice that spells: "diff --git"
-    const DIFF_LINE: [u8; 10] = [100, 105, 102, 102, 32, 45, 45, 103, 105, 116];
-
+    // start searching for the diff header
     let mut state: StateMachine = StateMachine::SearchingDiff;
 
     for line in lines {
+
+        // skip whitespace
+        if line.len() < 2 {
+            continue;
+        }
+
         match state {
             StateMachine::SearchingDiff => {
                 let diff_comparison_slice = line.get(0..10);
                 if diff_comparison_slice.is_some() {
                     if diff_comparison_slice.unwrap() == &DIFF_LINE {
+                        // if diff header is found, start searchin for the min
+                        state = StateMachine::SearchingMinFile;
                         println!("{:?}", String::from_utf8(line.to_owned()));
                     }
                 }
             },
+
             StateMachine::SearchingPlusFile => {
+                let min_comparison_slice = line.get(0..4);
+                if min_comparison_slice.is_some() {
+                    if min_comparison_slice.unwrap() == &PLUS_LINE {
+                        // if the plus is found, start gathering the changes
+                        state = StateMachine::SearchingChanges;
+                        println!("{:?}", String::from_utf8(line.to_owned()));
+                    }
+                }
             },
+
             StateMachine::SearchingMinFile => {
+                let min_comparison_slice = line.get(0..4);
+                if min_comparison_slice.is_some() {
+                    if min_comparison_slice.unwrap() == &MIN_LINE {
+                        // if the min is found, start searching for the plus
+                        state = StateMachine::SearchingPlusFile;
+                        println!("{:?}", String::from_utf8(line.to_owned()));
+                    }
+                }
             },
+
             StateMachine::SearchingChanges => {
+                let diff_comparison_slice = line.get(0..10);
+                if diff_comparison_slice.is_some() {
+                    if diff_comparison_slice.unwrap() == &DIFF_LINE {
+                        // if we encounter another diff line, start again
+                        // move this to some global analysis as this is repeated
+                        state = StateMachine::SearchingDiff;
+                        println!("processing new file");
+                        println!("{:?}", String::from_utf8(line.to_owned()));
+                    }
+                }
+                let first_byte = line.get(0..1);
+                if first_byte.is_some() {
+                    if first_byte.unwrap() == &[43] {
+                        // analyze as addition
+                        println!("{:?}", String::from_utf8(line.to_owned()));
+                    } else if first_byte.unwrap() == &[45] {
+                        // analyze as deletion
+                        println!("{:?}", String::from_utf8(line.to_owned()));
+                    }
+                }
             },
         }
     }
