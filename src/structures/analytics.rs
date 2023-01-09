@@ -5,6 +5,8 @@ pub struct Analytic {
     pub deletions: u32,
     pub author: Option<String>,
     pub hash: Option<String>,
+    pub min_line: Option<String>,
+    pub plus_line: Option<String>,
 }
 
 impl Analytic {
@@ -15,6 +17,8 @@ impl Analytic {
             additions: 0,
             deletions: 0,
             hash: None,
+            min_line: None,
+            plus_line: None,
         };
     }
 }

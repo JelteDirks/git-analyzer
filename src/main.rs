@@ -102,7 +102,6 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
 
     // start searching for the diff header
     let mut state: StateMachine = StateMachine::SearchingChanges;
-    let mut map: HashMap<String, Analytic> = HashMap::new();
     let mut current_analytic: Option<Analytic> = None;
 
     for line in lines {
@@ -113,31 +112,49 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
         }
 
         match state {
+            // searching for the new file
             StateMachine::SearchingPlusFile => {
                 let min_comparison_slice = line.get(0..4);
                 if min_comparison_slice.is_some() {
                     if min_comparison_slice.unwrap() == &PLUS_LINE {
                         // if the plus is found, start gathering the changes
                         state = StateMachine::SearchingChanges;
+                        current_analytic.as_mut()
+                            .unwrap()
+                            .plus_line = Some(
+                                String::from_utf8(line.to_owned()).unwrap()
+                            );
                     }
                 }
             },
 
+            // searching for the old file
             StateMachine::SearchingMinFile => {
                 let min_comparison_slice = line.get(0..4);
                 if min_comparison_slice.is_some() {
                     if min_comparison_slice.unwrap() == &MIN_LINE {
                         // if the min is found, start searching for the plus
                         state = StateMachine::SearchingPlusFile;
+                        current_analytic.as_mut()
+                            .unwrap()
+                            .min_line = Some(
+                                String::from_utf8(line.to_owned()).unwrap()
+                            );
                     }
                 }
             },
 
+            // searching for the changes
             StateMachine::SearchingChanges => {
+                // get the first 10 characters
                 let diff_comparison_slice = line.get(0..10);
+                let first_byte = line.get(0..1);
+                // if there are 10 characters check if its the diff header line
                 if diff_comparison_slice.is_some() {
                     if diff_comparison_slice.unwrap() == &DIFF_LINE {
-                        // if diff header is found, start searchin for the min
+                        // It is the diff header line, save the current analytic
+                        // if it exists and create a new one to hold the new 
+                        // changes.
                         state = StateMachine::SearchingMinFile;
                         if current_analytic.is_some() {
                             analytics.lock().unwrap()
@@ -151,9 +168,7 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
                             String::from(&commit.hash)
                         );
                     }
-                }
-                let first_byte = line.get(0..1);
-                if first_byte.is_some() {
+                } else if first_byte.is_some() {
                     if first_byte.unwrap() == &[43] {
                         // analyze as addition
                         current_analytic.as_mut().unwrap().additions += 1;
