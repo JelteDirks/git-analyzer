@@ -161,10 +161,13 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
                                 .push(current_analytic.unwrap());
                         }
                         current_analytic = Some(Analytic::default());
-                        current_analytic.as_mut().unwrap().extension = Some(
+                        let mut local_analytic: &mut Analytic = current_analytic
+                            .as_mut()
+                            .unwrap();
+                        local_analytic.extension = Some(
                             String::from_utf8(line.to_owned()).unwrap()
                         );
-                        current_analytic.as_mut().unwrap().hash = Some(
+                        local_analytic.hash = Some(
                             String::from(&commit.hash)
                         );
                     }
