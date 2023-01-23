@@ -83,20 +83,29 @@ fn main() {
         h.join().unwrap();
     }
 
-    // TODO: use the extension property as a map key to store all the additions
-    // and deletions of one extension
+    // TODO: use a better metric container
 
-    let mut map: HashMap<String, u32> = HashMap::new();
+    let mut map: HashMap<String, Analytic> = HashMap::new();
 
     for a in analytics.lock().unwrap().iter() {
         let key = a.extension.as_ref().unwrap();
         map.entry(key.into())
-            .and_modify(|add| *add += a.additions)
-            .or_insert(a.additions);
+            .and_modify(|existing| {
+                existing.additions += a.additions;
+                existing.deletions += a.deletions;
+            })
+            .or_insert(Analytic::from_add_del(a.additions, a.deletions));
     }
 
+    use std::io::Write;
+
+    let mut stdout = std::io::stdout();
+
     for e in map.iter() {
-        println!("{:?}", e);
+        let (ext, analytic) = e;
+        stdout.write(format!("Files with extension .{}\n", ext).as_bytes()).unwrap();
+        stdout.write(format!("\t {} additions\n", analytic.additions).as_bytes()).unwrap();
+        stdout.write(format!("\t {} deletions\n", analytic.deletions).as_bytes()).unwrap();
     }
 }
 
