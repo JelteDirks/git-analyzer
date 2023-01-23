@@ -71,6 +71,7 @@ fn main() {
     for commit in commits {
         let cloned_analytics = Arc::clone(&analytics);
 
+        // TODO: upper limit for threads should be incorporated
         let handle = std::thread::spawn(move || {
             analyze_commit(commit, cloned_analytics)
         });
@@ -80,6 +81,10 @@ fn main() {
 
     for h in join_handles {
         h.join().unwrap();
+    }
+
+    for a in analytics.lock().unwrap().iter() {
+        println!("{:?}", a);
     }
 }
 
@@ -155,12 +160,13 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
                                 .push(current_analytic.unwrap());
                         }
                         current_analytic = Some(Analytic::default());
+
                         let mut local_analytic: &mut Analytic = current_analytic
                             .as_mut()
                             .unwrap();
-                        local_analytic.extension = Some(
-                            String::from_utf8(line.to_owned()).unwrap()
-                        );
+
+                        let ext = find_extension_from_diff(&line);
+                        local_analytic.extension = Some(ext);
                         local_analytic.hash = Some(
                             String::from(&commit.hash)
                         );
@@ -192,6 +198,15 @@ enum StateMachine {
     SearchingMinFile,
     SearchingPlusFile,
     SearchingChanges,
+}
+
+fn find_extension_from_diff(diff_line: &[u8]) -> String {
+    // split on "." and get the last, since this should be the extension
+    let splits = diff_line.split(|&byte| byte == 46);
+    if let Some(ext) = splits.last() {
+        return String::from_utf8(ext.to_owned()).unwrap();
+    }
+    return "unknown".into();
 }
 
 
