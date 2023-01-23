@@ -81,12 +81,6 @@ fn main() {
     for h in join_handles {
         h.join().unwrap();
     }
-
-    println!("{}", analytics.lock().unwrap().len());
-
-    for a in analytics.lock().unwrap().iter() {
-        println!("{:?}", a);
-    }
 }
 
 
@@ -171,7 +165,9 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
                             String::from(&commit.hash)
                         );
                     }
-                } else if first_byte.is_some() {
+                }
+
+                if first_byte.is_some() {
                     if first_byte.unwrap() == &[43] {
                         // analyze as addition
                         current_analytic.as_mut().unwrap().additions += 1;
@@ -182,6 +178,13 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
                 }
             },
         }
+    }
+
+    // save the analytic of the last diff
+    // TODO: do this better...
+    if current_analytic.is_some() {
+        analytics.lock().unwrap()
+            .push(current_analytic.unwrap());
     }
 }
 
