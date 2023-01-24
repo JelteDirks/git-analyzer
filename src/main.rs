@@ -1,10 +1,10 @@
 mod structures;
 
-use crate::structures::commit::Commit;
 use crate::structures::analytics::Analytic;
+use crate::structures::commit::Commit;
 use std::collections::HashMap;
 use std::process::Command;
-use std::sync::{Mutex, Arc};
+use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
 // need to rewrite because this is not supporting multi threading really well
@@ -12,7 +12,7 @@ use std::thread::JoinHandle;
 // 1) use input from git log to analyze the repo, pipe this into the program
 // so that the user can select their own commits based on git log
 //
-// 2) Distribute the commit hashes over a number of threads to analyze those 
+// 2) Distribute the commit hashes over a number of threads to analyze those
 // commits independent of the main thread.
 //
 // 3) Use the analyzed aggregated data to improve show stuff to the user
@@ -40,9 +40,10 @@ fn main() {
     // 1 git log with preformatted lines
     let mut commits: Vec<Commit> = Vec::new();
 
+    // TODO: use clap to parse args
+
     match std::env::consts::FAMILY {
         "unix" => {
-
             // execute git log in the current directory
             let output = Command::new("sh")
                 .args(["-c", "git log --format=\"%H %ct %ae\""])
@@ -51,8 +52,7 @@ fn main() {
 
             // process the output of the default logging
             create_commit_structs(output.stdout.as_slice(), &mut commits);
-
-        },
+        }
         "windows" => {
             println!("not supported yet")
         }
@@ -63,8 +63,7 @@ fn main() {
 
     let n_commits: usize = commits.len();
 
-    let analytics: Arc<Mutex<Vec<Analytic>>> = Arc::new(Mutex::new(
-        Vec::with_capacity(n_commits)));
+    let analytics: Arc<Mutex<Vec<Analytic>>> = Arc::new(Mutex::new(Vec::with_capacity(n_commits)));
 
     let mut join_handles: Vec<JoinHandle<()>> = Vec::with_capacity(n_commits);
 
@@ -72,9 +71,7 @@ fn main() {
         let cloned_analytics = Arc::clone(&analytics);
 
         // TODO: upper limit for threads should be incorporated
-        let handle = std::thread::spawn(move || {
-            analyze_commit(commit, cloned_analytics)
-        });
+        let handle = std::thread::spawn(move || analyze_commit(commit, cloned_analytics));
 
         join_handles.push(handle);
     }
@@ -103,12 +100,17 @@ fn main() {
 
     for e in map.iter() {
         let (ext, analytic) = e;
-        stdout.write(format!("Files with extension .{}\n", ext).as_bytes()).unwrap();
-        stdout.write(format!("\t {} additions\n", analytic.additions).as_bytes()).unwrap();
-        stdout.write(format!("\t {} deletions\n", analytic.deletions).as_bytes()).unwrap();
+        stdout
+            .write(format!("Files with extension .{}\n", ext).as_bytes())
+            .unwrap();
+        stdout
+            .write(format!("\t {} additions\n", analytic.additions).as_bytes())
+            .unwrap();
+        stdout
+            .write(format!("\t {} deletions\n", analytic.deletions).as_bytes())
+            .unwrap();
     }
 }
-
 
 fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
     let program = "git show ".to_owned() + &commit.hash;
@@ -125,7 +127,6 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
     let mut current_analytic: Option<Analytic> = None;
 
     for line in lines {
-
         // skip whitespace
         if line.len() < 2 {
             continue;
@@ -139,14 +140,11 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
                     if min_comparison_slice.unwrap() == &PLUS_LINE {
                         // if the plus is found, start gathering the changes
                         state = StateMachine::SearchingChanges;
-                        current_analytic.as_mut()
-                            .unwrap()
-                            .plus_line = Some(
-                                String::from_utf8(line.to_owned()).unwrap()
-                            );
+                        current_analytic.as_mut().unwrap().plus_line =
+                            Some(String::from_utf8(line.to_owned()).unwrap());
                     }
                 }
-            },
+            }
 
             // searching for the old file
             StateMachine::SearchingMinFile => {
@@ -155,14 +153,11 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
                     if min_comparison_slice.unwrap() == &MIN_LINE {
                         // if the min is found, start searching for the plus
                         state = StateMachine::SearchingPlusFile;
-                        current_analytic.as_mut()
-                            .unwrap()
-                            .min_line = Some(
-                                String::from_utf8(line.to_owned()).unwrap()
-                            );
+                        current_analytic.as_mut().unwrap().min_line =
+                            Some(String::from_utf8(line.to_owned()).unwrap());
                     }
                 }
-            },
+            }
 
             // searching for the changes
             StateMachine::SearchingChanges => {
@@ -173,24 +168,19 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
                 if diff_comparison_slice.is_some() {
                     if diff_comparison_slice.unwrap() == &DIFF_LINE {
                         // It is the diff header line, save the current analytic
-                        // if it exists and create a new one to hold the new 
+                        // if it exists and create a new one to hold the new
                         // changes.
                         state = StateMachine::SearchingMinFile;
                         if current_analytic.is_some() {
-                            analytics.lock().unwrap()
-                                .push(current_analytic.unwrap());
+                            analytics.lock().unwrap().push(current_analytic.unwrap());
                         }
                         current_analytic = Some(Analytic::default());
 
-                        let mut local_analytic: &mut Analytic = current_analytic
-                            .as_mut()
-                            .unwrap();
+                        let mut local_analytic: &mut Analytic = current_analytic.as_mut().unwrap();
 
                         let ext = find_extension_from_diff(&line);
                         local_analytic.extension = Some(ext);
-                        local_analytic.hash = Some(
-                            String::from(&commit.hash)
-                        );
+                        local_analytic.hash = Some(String::from(&commit.hash));
                     }
                 }
 
@@ -203,15 +193,14 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
                         current_analytic.as_mut().unwrap().deletions += 1;
                     }
                 }
-            },
+            }
         }
     }
 
     // save the analytic of the last diff
     // TODO: do this better...
     if current_analytic.is_some() {
-        analytics.lock().unwrap()
-            .push(current_analytic.unwrap());
+        analytics.lock().unwrap().push(current_analytic.unwrap());
     }
 }
 
@@ -230,10 +219,10 @@ fn find_extension_from_diff(diff_line: &[u8]) -> String {
     return "unknown".into();
 }
 
-
 fn create_commit_structs(hash_list: &[u8], commit_vec: &mut Vec<Commit>) {
     for line in hash_list.split(|&byte| byte == 10) {
-        if line.len() < 42 { // commit hash is at least 40 characters
+        if line.len() < 42 {
+            // commit hash is at least 40 characters
             // too short to be a valid commit to be investigated
             continue;
         }

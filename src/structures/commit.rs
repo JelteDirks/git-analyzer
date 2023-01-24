@@ -8,10 +8,8 @@ pub struct Commit {
 }
 
 impl Commit {
-
     // convert a line from the preformatted log output to a commit structure
     pub fn new_from_preformat(line: &[u8]) -> Commit {
-
         // split on spaces
         let mut chunks = line.split(|&byte| byte == 0x20);
 
@@ -26,15 +24,13 @@ impl Commit {
 
         // third character set is the email of the commiter
         let author_email_slice: &[u8] = chunks.next().unwrap();
-        let author_email_string: &str = std::str::from_utf8(author_email_slice)
-            .unwrap();
+        let author_email_string: &str = std::str::from_utf8(author_email_slice).unwrap();
 
         // create and return the commit with owned strings
         return Commit {
             author: author_email_string.into(),
             hash: hash_string.into(),
             date_unix: date_long,
-        }
+        };
     }
-
 }
