@@ -120,11 +120,13 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
         .output()
         .expect("git show execution did not go as planned");
 
-    let lines = output.stdout.split(|&byte| byte == 10);
+    analyze_log_stream(output.stdout, analytics)
+}
 
-    // start searching for the diff header
+fn analyze_log_stream(log_stream: Vec<u8>, analytics: Arc<Mutex<Vec<Analytic>>>) {
     let mut state: StateMachine = StateMachine::SearchingChanges;
     let mut current_analytic: Option<Analytic> = None;
+    let lines = log_stream.split(|&byte| byte == 10);
 
     for line in lines {
         // skip whitespace
@@ -180,7 +182,6 @@ fn analyze_commit(commit: Commit, analytics: Arc<Mutex<Vec<Analytic>>>) {
 
                         let ext = find_extension_from_diff(&line);
                         local_analytic.extension = Some(ext);
-                        local_analytic.hash = Some(String::from(&commit.hash));
                     }
                 }
 
