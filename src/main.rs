@@ -1,7 +1,10 @@
 mod structures;
+mod cli;
 
 use crate::structures::analytics::Analytic;
 use crate::structures::commit::Commit;
+use crate::cli::args::Args;
+use clap::Parser;
 use std::collections::HashMap;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
@@ -37,11 +40,15 @@ const MIN_LINE: [u8; 4] = [45, 45, 45, 32];
 const PLUS_LINE: [u8; 4] = [43, 43, 43, 32];
 
 fn main() {
+
+    let args = Args::parse();
+
+    println!("{:?}", args);
+
     // 1 git log with preformatted lines
     let mut commits: Vec<Commit> = Vec::new();
 
     // TODO: use clap to parse args
-
     match std::env::consts::FAMILY {
         "unix" => {
             // execute git log in the current directory
