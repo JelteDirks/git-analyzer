@@ -1,10 +1,8 @@
 mod structures;
 mod cli;
 
-use crate::structures::analytics::Analytic;
 use crate::cli::args::Args;
-
-use std::io::BufRead;
+use std::io::{BufRead, BufReader};
 use clap::Parser;
 
 // need to rewrite because this is not supporting multi threading really well
@@ -27,26 +25,16 @@ use clap::Parser;
 // %ct is commit date
 // %ae is the author email
 
-// byte slice that spells: "diff --git"
-const DIFF_LINE: [u8; 10] = [100, 105, 102, 102, 32, 45, 45, 103, 105, 116];
-
-// byte slice for "--- "
-const MIN_LINE: [u8; 4] = [45, 45, 45, 32];
-
-// byte slice for "+++ "
-const PLUS_LINE: [u8; 4] = [43, 43, 43, 32];
-
 fn main() {
 
     let args = Args::parse();
+    let lines: Option<BufReader<String>> = None;
 
     if args.stdin {
         let stdin = std::io::stdin().lock();
-        let lines = stdin.lines();
-
-        for line in lines {
-            println!("{:?}", line);
-        }
+    } else if args.path.is_some() {
+        // do a git log -p in that path
+        // analyze the results of that log
     }
 }
 
