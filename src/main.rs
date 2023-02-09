@@ -2,13 +2,10 @@ mod structures;
 mod cli;
 
 use crate::structures::analytics::Analytic;
-use crate::structures::commit::Commit;
+use crate::cli::args::Args;
+
+use std::io::BufRead;
 use clap::Parser;
-use std::collections::HashMap;
-use std::io::{stdin, BufRead};
-use std::process::Command;
-use std::sync::{Arc, Mutex};
-use std::thread::JoinHandle;
 
 // need to rewrite because this is not supporting multi threading really well
 //
@@ -39,17 +36,6 @@ const MIN_LINE: [u8; 4] = [45, 45, 45, 32];
 // byte slice for "+++ "
 const PLUS_LINE: [u8; 4] = [43, 43, 43, 32];
 
-
-#[derive(Parser, Debug)]
-#[command(author, version, about)]
-pub struct Args {
-    #[arg(short = 'i', long)]
-    stdin: bool,
-
-    #[arg(short = 'p', long)]
-    path: Option<String>,
-}
-
 fn main() {
 
     let args = Args::parse();
@@ -63,6 +49,7 @@ fn main() {
         }
     }
 }
+
 
 fn find_extension_from_diff(diff_line: &[u8]) -> String {
     // split on "." and get the last, since this should be the extension
