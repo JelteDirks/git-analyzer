@@ -2,8 +2,9 @@ mod structures;
 mod cli;
 
 use crate::cli::args::Args;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, StdinLock, Lines};
 use clap::Parser;
+use structures::analytics::Analytic;
 
 // need to rewrite because this is not supporting multi threading really well
 //
@@ -28,14 +29,23 @@ use clap::Parser;
 fn main() {
 
     let args = Args::parse();
-    let lines: Option<BufReader<String>> = None;
 
     if args.stdin {
         let stdin = std::io::stdin().lock();
+        process_stdin_lines(stdin.lines());
+
     } else if args.path.is_some() {
         // do a git log -p in that path
         // analyze the results of that log
     }
+}
+
+enum Errors {
+    Any
+}
+
+fn process_stdin_lines(lines: Lines<StdinLock>) -> Vec<Analytic> {
+    return Vec::new();
 }
 
 
