@@ -1,9 +1,9 @@
-mod structures;
 mod cli;
+mod structures;
 
 use crate::cli::args::Args;
-use std::io::{BufRead, BufReader, StdinLock, Lines};
 use clap::Parser;
+use std::io::{BufRead, BufReader, Lines, StdinLock};
 use structures::analytics::Analytic;
 
 // need to rewrite because this is not supporting multi threading really well
@@ -27,27 +27,60 @@ use structures::analytics::Analytic;
 // %ae is the author email
 
 fn main() {
-
     let args = Args::parse();
+    let mut analytics_list: Vec<Analytic> = Vec::new();
 
     if args.stdin {
         let stdin = std::io::stdin().lock();
-        process_stdin_lines(stdin.lines());
-
+        process_stdin_lines(stdin.lines(), &mut analytics_list);
     } else if args.path.is_some() {
         // do a git log -p in that path
         // analyze the results of that log
     }
 }
 
-enum Errors {
-    Any
+enum AnalyzeState {
+    DiffLine,
+    MinLine,
+    PlusLine,
+    Changes,
+    Saving,
 }
 
-fn process_stdin_lines(lines: Lines<StdinLock>) -> Vec<Analytic> {
-    return Vec::new();
+fn process_stdin_lines<'a>(
+    lines: Lines<StdinLock>,
+    analytics_list: &'a mut Vec<Analytic>,
+) -> &'a mut Vec<Analytic> {
+    let state = AnalyzeState::DiffLine;
+    for line in lines {
+        if line.is_err() {
+            todo!("error in the line from stdin, handle it gracefully");
+        }
+        match state {
+            AnalyzeState::DiffLine => {
+                if is_diff_line(&line) {
+                    println!("{:?}", line);
+                }
+            }
+            AnalyzeState::MinLine => todo!(),
+            AnalyzeState::PlusLine => todo!(),
+            AnalyzeState::Changes => todo!(),
+            AnalyzeState::Saving => todo!(),
+        }
+    }
+    return analytics_list;
 }
 
+fn is_diff_line(line: &Result<String, std::io::Error>) -> bool {
+    let actual = line.as_ref().unwrap();
+    if actual.len() < 10 {
+        return false;
+    }
+    if actual.get(0..10).unwrap() == "diff --git" {
+        return true;
+    }
+    return false;
+}
 
 fn find_extension_from_diff(diff_line: &[u8]) -> String {
     // split on "." and get the last, since this should be the extension
