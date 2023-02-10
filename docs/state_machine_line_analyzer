@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2023-02-10T22:44:29.997Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Safari/605.1.15" etag="Tt9yryCzb82R_5Rwxops" version="20.8.16" type="github">
+<mxfile host="app.diagrams.net" modified="2023-02-10T23:32:38.987Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Safari/605.1.15" etag="GyCoN42EOdQbqWsk48Bi" version="20.8.16" type="github">
   <diagram name="Pagina-1" id="iU7ibXFK84pU2Yo4AMp6">
-    <mxGraphModel dx="998" dy="641" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="998" dy="613" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -42,17 +42,34 @@
         <mxCell id="ESHpK3oFBsHisMuaCGtC-6" value="looking for +++ line" style="shape=ellipse;html=1;dashed=0;whitespace=wrap;aspect=fixed;perimeter=ellipsePerimeter;" vertex="1" parent="1">
           <mxGeometry x="450" y="360" width="110" height="110" as="geometry" />
         </mxCell>
-        <mxCell id="ESHpK3oFBsHisMuaCGtC-15" value="diff line found" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=classic;endFill=1;" edge="1" parent="1" source="ESHpK3oFBsHisMuaCGtC-9" target="ESHpK3oFBsHisMuaCGtC-14">
+        <mxCell id="ESHpK3oFBsHisMuaCGtC-15" value="diff line found" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=classic;endFill=1;curved=1;" edge="1" parent="1" source="ESHpK3oFBsHisMuaCGtC-9" target="ESHpK3oFBsHisMuaCGtC-3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="270" y="310" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="660" y="647.5" />
+              <mxPoint x="660" y="175" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ESHpK3oFBsHisMuaCGtC-20" value="" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=classic;endFill=1;" edge="1" parent="1" source="ESHpK3oFBsHisMuaCGtC-9" target="ESHpK3oFBsHisMuaCGtC-19">
           <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ESHpK3oFBsHisMuaCGtC-21" value="lines run out" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="ESHpK3oFBsHisMuaCGtC-20">
+          <mxGeometry x="-0.0681" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="ESHpK3oFBsHisMuaCGtC-9" value="looking for additions&lt;br&gt;and deletions" style="shape=ellipse;html=1;dashed=0;whitespace=wrap;aspect=fixed;perimeter=ellipsePerimeter;" vertex="1" parent="1">
           <mxGeometry x="442.5" y="585" width="125" height="125" as="geometry" />
         </mxCell>
-        <mxCell id="ESHpK3oFBsHisMuaCGtC-16" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=classic;endFill=1;" edge="1" parent="1" source="ESHpK3oFBsHisMuaCGtC-14" target="ESHpK3oFBsHisMuaCGtC-3">
+        <mxCell id="ESHpK3oFBsHisMuaCGtC-23" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=classic;endFill=1;" edge="1" parent="1" source="ESHpK3oFBsHisMuaCGtC-19" target="ESHpK3oFBsHisMuaCGtC-22">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="ESHpK3oFBsHisMuaCGtC-14" value="saving the statistics" style="shape=ellipse;html=1;dashed=0;whitespace=wrap;aspect=fixed;perimeter=ellipsePerimeter;" vertex="1" parent="1">
-          <mxGeometry x="126.25" y="356.25" width="117.5" height="117.5" as="geometry" />
+        <mxCell id="ESHpK3oFBsHisMuaCGtC-19" value="save the last&lt;br&gt;statistic" style="shape=ellipse;html=1;dashed=0;whitespace=wrap;aspect=fixed;perimeter=ellipsePerimeter;" vertex="1" parent="1">
+          <mxGeometry x="740" y="585" width="125" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="ESHpK3oFBsHisMuaCGtC-22" value="" style="shape=mxgraph.sysml.actFinal;html=1;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="950" y="627.5" width="40" height="40" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
