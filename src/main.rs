@@ -44,7 +44,6 @@ enum AnalyzeState {
     MinLine,
     PlusLine,
     Changes,
-    Saving,
 }
 
 fn process_stdin_lines<'a>(
@@ -72,14 +71,49 @@ fn process_stdin_lines<'a>(
             AnalyzeState::PlusLine => {
                 if is_plus_line(&line) {
                     println!("{:?}", line);
-                    state = AnalyzeState::DiffLine;
+                    state = AnalyzeState::Changes;
                 }
             },
-            AnalyzeState::Changes => todo!(),
-            AnalyzeState::Saving => todo!(),
+            AnalyzeState::Changes => {
+                if is_diff_line(&line) {
+                    println!("{:?}", line);
+                    state = AnalyzeState::MinLine;
+                    // TODO: do the saving of this analytic in here and continue
+                    // with the new diff to analyze
+                    continue;
+                }
+                if is_addition(&line) {
+                    println!("{:?}", line);
+                } else if is_deletion(&line) {
+                    println!("{:?}", line);
+                }
+            },
         }
     }
+    println!("final analytic save here");
     return analytics_list;
+}
+
+fn is_addition(line: &Result<String, std::io::Error>) -> bool {
+    let actual = line.as_ref().unwrap();
+    if actual.len() < 1 {
+        return false;
+    }
+    if actual.get(0..1).unwrap() == "+" {
+        return true;
+    }
+    return false;
+}
+
+fn is_deletion(line: &Result<String, std::io::Error>) -> bool {
+    let actual = line.as_ref().unwrap();
+    if actual.len() < 1 {
+        return false;
+    }
+    if actual.get(0..1).unwrap() == "-" {
+        return true;
+    }
+    return false;
 }
 
 fn is_plus_line(line: &Result<String, std::io::Error>) -> bool {
