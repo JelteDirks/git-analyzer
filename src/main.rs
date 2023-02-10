@@ -51,7 +51,7 @@ fn process_stdin_lines<'a>(
     lines: Lines<StdinLock>,
     analytics_list: &'a mut Vec<Analytic>,
 ) -> &'a mut Vec<Analytic> {
-    let state = AnalyzeState::DiffLine;
+    let mut state = AnalyzeState::DiffLine;
     for line in lines {
         if line.is_err() {
             todo!("error in the line from stdin, handle it gracefully");
@@ -60,15 +60,32 @@ fn process_stdin_lines<'a>(
             AnalyzeState::DiffLine => {
                 if is_diff_line(&line) {
                     println!("{:?}", line);
+                    state = AnalyzeState::MinLine;
                 }
             }
-            AnalyzeState::MinLine => todo!(),
+            AnalyzeState::MinLine => {
+                if is_min_line(&line) {
+                    println!("{:?}", line);
+                    state = AnalyzeState::DiffLine;
+                }
+            },
             AnalyzeState::PlusLine => todo!(),
             AnalyzeState::Changes => todo!(),
             AnalyzeState::Saving => todo!(),
         }
     }
     return analytics_list;
+}
+
+fn is_min_line(line: &Result<String, std::io::Error>) -> bool {
+    let actual = line.as_ref().unwrap();
+    if actual.len() < 4 {
+        return false;
+    }
+    if actual.get(0..4).unwrap() == "--- " {
+        return true;
+    }
+    return false;
 }
 
 fn is_diff_line(line: &Result<String, std::io::Error>) -> bool {
