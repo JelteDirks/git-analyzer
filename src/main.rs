@@ -62,19 +62,35 @@ fn process_stdin_lines<'a>(
                     println!("{:?}", line);
                     state = AnalyzeState::MinLine;
                 }
-            }
+            },
             AnalyzeState::MinLine => {
                 if is_min_line(&line) {
+                    println!("{:?}", line);
+                    state = AnalyzeState::PlusLine;
+                }
+            },
+            AnalyzeState::PlusLine => {
+                if is_plus_line(&line) {
                     println!("{:?}", line);
                     state = AnalyzeState::DiffLine;
                 }
             },
-            AnalyzeState::PlusLine => todo!(),
             AnalyzeState::Changes => todo!(),
             AnalyzeState::Saving => todo!(),
         }
     }
     return analytics_list;
+}
+
+fn is_plus_line(line: &Result<String, std::io::Error>) -> bool {
+    let actual = line.as_ref().unwrap();
+    if actual.len() < 4 {
+        return false;
+    }
+    if actual.get(0..4).unwrap() == "+++ " {
+        return true;
+    }
+    return false;
 }
 
 fn is_min_line(line: &Result<String, std::io::Error>) -> bool {
