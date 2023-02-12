@@ -5,7 +5,7 @@ use crate::cli::args::Args;
 use clap::Parser;
 use std::{
     collections::HashMap,
-    io::{BufRead, BufReader, Lines, StdinLock},
+    io::{BufRead, BufReader, Lines, StdinLock, Write},
 };
 use structures::analytics::Analytic;
 
@@ -41,6 +41,10 @@ fn main() {
         // analyze the results of that log
     }
 
+    produce_output(analytics_list);
+}
+
+fn produce_output(analytics_list: Vec<Analytic>) {
     let mut analytics_collection: HashMap<String, Analytic> = HashMap::new();
 
     for a in analytics_list {
@@ -54,15 +58,24 @@ fn main() {
             .or_insert(a);
     }
 
-    for a in analytics_collection {
-        println!("{:?}", a);
+    let mut stdout = std::io::stdout();
+
+    for a in analytics_collection.iter() {
+        let (extension, analytic) = a;
+        stdout
+            .write(format!("For {} files\n", extension).as_bytes())
+            .unwrap();
+        stdout
+            .write(format!("\t{} additions\n", analytic.additions).as_bytes())
+            .unwrap();
+        stdout
+            .write(format!("\t{} deletions\n", analytic.deletions).as_bytes())
+            .unwrap();
     }
 }
 
 enum AnalyzeState {
     DiffLine,
-    MinLine,
-    PlusLine,
     Changes,
 }
 
@@ -79,24 +92,13 @@ fn process_stdin_lines<'a>(
         match state {
             AnalyzeState::DiffLine => {
                 if is_diff_line(&line) {
-                    state = AnalyzeState::MinLine;
+                    state = AnalyzeState::Changes;
                     let ext = find_extension_from_diff(&line.unwrap().as_bytes());
                     analytic.extension = Some(ext.into());
                 }
             }
-            AnalyzeState::MinLine => {
-                if is_min_line(&line) {
-                    state = AnalyzeState::PlusLine;
-                }
-            }
-            AnalyzeState::PlusLine => {
-                if is_plus_line(&line) {
-                    state = AnalyzeState::Changes;
-                }
-            }
             AnalyzeState::Changes => {
                 if is_diff_line(&line) {
-                    state = AnalyzeState::MinLine;
                     analytics_list.push(analytic);
                     analytic = Analytic::default();
                     let ext = find_extension_from_diff(&line.unwrap().as_bytes());
@@ -174,6 +176,8 @@ fn is_diff_line(line: &Result<String, std::io::Error>) -> bool {
 
 fn find_extension_from_diff(diff_line: &[u8]) -> String {
     // split on "." and get the last, since this should be the extension
+    // improve this function since there might be files without extension
+    // possibly use the entire filename
     let splits = diff_line.split(|&byte| byte == 46);
     if let Some(ext) = splits.last() {
         return String::from_utf8(ext.to_owned()).unwrap();
