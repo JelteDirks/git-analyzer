@@ -7,9 +7,11 @@ use crate::cli::args::Args;
 use clap::Parser;
 use std::{
     collections::HashMap,
-    io::{BufRead, BufReader, Lines, StdinLock, Write},
+    io::{BufRead, Write},
+    path::Path,
 };
 use structures::analytics::Analytic;
+use utils::lines::{process_stdin_lines, process_byte_slice};
 
 // need to rewrite because this is not supporting multi threading really well
 //
@@ -36,11 +38,45 @@ fn main() {
     let mut analytics_list: Vec<Analytic> = Vec::new();
 
     if args.stdin {
+        // when stdin is used, no special treatment is needed so far
+        // expand with detailed analytics later?
         let stdin = std::io::stdin().lock();
         process_stdin_lines(stdin.lines(), &mut analytics_list);
-    } else if args.path.is_some() {
-        // do a git log -p in that path
-        // analyze the results of that log
+        produce_output(analytics_list);
+        std::process::exit(0);
+    }
+
+    if args.path.is_some() {
+        let project_directory = Path::new(args.path.as_ref().unwrap());
+        let cwd = std::env::set_current_dir(project_directory);
+        if cwd.is_err() {
+            std::io::stderr()
+                .write(format!("could not change into {:?}\n", project_directory).as_bytes())
+                .unwrap();
+            std::process::exit(1);
+        }
+        cwd.unwrap();
+
+        let cmd = std::process::Command::new("sh")
+            .arg("-c")
+            .arg("git log -p")
+            .output();
+
+        if cmd.is_err() {
+            std::io::stderr()
+                .write(
+                    format!("problem with executing git log -p in the project directory\n")
+                        .as_bytes(),
+                )
+                .unwrap();
+            std::io::stderr()
+                .write(cmd.unwrap_err().to_string().as_bytes())
+                .unwrap();
+            std::process::exit(1);
+        }
+
+        let stdout = cmd.unwrap().stdout;
+        process_byte_slice(stdout.as_slice(), &mut analytics_list);
     }
 
     produce_output(analytics_list);
@@ -74,52 +110,4 @@ fn produce_output(analytics_list: Vec<Analytic>) {
             .write(format!("\t{} deletions\n", analytic.deletions).as_bytes())
             .unwrap();
     }
-}
-
-enum AnalyzeState {
-    DiffLine,
-    Changes,
-}
-
-use crate::utils::lines::{find_extension_from_diff, is_addition, is_deletion, is_diff_line};
-
-fn process_stdin_lines<'a>(
-    lines: Lines<StdinLock>,
-    analytics_list: &'a mut Vec<Analytic>,
-) -> &'a mut Vec<Analytic> {
-    let mut state = AnalyzeState::DiffLine;
-    let mut analytic = Analytic::default();
-
-    for line in lines {
-        if line.is_err() {
-            todo!("error in the line from stdin, handle it gracefully");
-        }
-        match state {
-            AnalyzeState::DiffLine => {
-                if is_diff_line(&line) {
-                    state = AnalyzeState::Changes;
-                    let ext = find_extension_from_diff(&line.unwrap().as_bytes());
-                    analytic.extension = Some(ext.into());
-                }
-            }
-            AnalyzeState::Changes => {
-                if is_diff_line(&line) {
-                    analytics_list.push(analytic);
-                    analytic = Analytic::default();
-                    let ext = find_extension_from_diff(&line.unwrap().as_bytes());
-                    analytic.extension = Some(ext.into());
-                    // TODO: do the saving of this analytic in here and continue
-                    // with the new diff to analyze
-                    continue;
-                }
-                if is_addition(&line) {
-                    analytic.additions += 1;
-                } else if is_deletion(&line) {
-                    analytic.deletions += 1;
-                }
-            }
-        }
-    }
-    analytics_list.push(analytic);
-    return analytics_list;
 }
