@@ -21,16 +21,4 @@ impl Analytic {
             plus_line: None,
         };
     }
-
-    pub fn from_add_del(add: u32, del: u32) -> Analytic {
-        return Analytic {
-            extension: None,
-            additions: add,
-            deletions: del,
-            author: None,
-            hash: None,
-            min_line: None,
-            plus_line: None,
-        };
-    }
 }

@@ -6,12 +6,14 @@ use crate::cli::args::Args;
 
 use clap::Parser;
 use std::{
-    collections::HashMap,
     io::{BufRead, Write},
     path::Path,
 };
 use structures::analytics::Analytic;
-use utils::lines::{process_byte_slice, process_stdin_lines};
+use utils::{
+    lines::{process_byte_slice, process_stdin_lines},
+    output::produce_output,
+};
 
 // need to rewrite because this is not supporting multi threading really well
 //
@@ -83,50 +85,4 @@ fn main() {
     }
 
     produce_output(analytics_list, &args);
-}
-
-fn produce_output(analytics_list: Vec<Analytic>, args: &Args) {
-    let mut analytics_collection: HashMap<String, Analytic> = HashMap::new();
-
-    for a in analytics_list {
-        let key = a.extension.as_ref().unwrap();
-        analytics_collection
-            .entry(key.into())
-            .and_modify(|existing| {
-                existing.additions += a.additions;
-                existing.deletions += a.deletions;
-            })
-            .or_insert(a);
-    }
-
-    let mut stdout = std::io::stdout();
-    let filter_extension = args.filter_extension.is_some();
-    let extension_list: Vec<&[u8]> = args.filter_extension
-        .as_ref()
-        .unwrap()
-        .as_bytes()
-        .split(|&byte| byte == 32)
-        .collect();
-
-    for a in analytics_collection.iter() {
-        let (extension, analytic) = a;
-        if filter_extension {
-            if is_excluded_extension(&extension, &extension_list) {
-                continue;
-            }
-        }
-        stdout
-            .write(format!("For {} files\n", extension).as_bytes())
-            .unwrap();
-        stdout
-            .write(format!("\t{} additions\n", analytic.additions).as_bytes())
-            .unwrap();
-        stdout
-            .write(format!("\t{} deletions\n", analytic.deletions).as_bytes())
-            .unwrap();
-    }
-}
-
-fn is_excluded_extension(extension: &str, extension_list: &Vec<&[u8]>) -> bool {
-    return extension_list.contains(&extension.as_bytes());
 }
