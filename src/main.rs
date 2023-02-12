@@ -141,28 +141,6 @@ fn is_deletion(line: &Result<String, std::io::Error>) -> bool {
     return false;
 }
 
-fn is_plus_line(line: &Result<String, std::io::Error>) -> bool {
-    let actual = line.as_ref().unwrap();
-    if actual.len() < 4 {
-        return false;
-    }
-    if actual.get(0..4).unwrap() == "+++ " {
-        return true;
-    }
-    return false;
-}
-
-fn is_min_line(line: &Result<String, std::io::Error>) -> bool {
-    let actual = line.as_ref().unwrap();
-    if actual.len() < 4 {
-        return false;
-    }
-    if actual.get(0..4).unwrap() == "--- " {
-        return true;
-    }
-    return false;
-}
-
 fn is_diff_line(line: &Result<String, std::io::Error>) -> bool {
     let actual = line.as_ref().unwrap();
     if actual.len() < 10 {
