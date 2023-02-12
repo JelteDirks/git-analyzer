@@ -8,4 +8,7 @@ pub struct Args {
 
     #[arg(short = 'p', long)]
     pub path: Option<String>,
+
+    #[arg(long)]
+    pub filter_extension: Option<String>,
 }

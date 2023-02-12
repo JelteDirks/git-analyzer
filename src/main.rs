@@ -11,7 +11,7 @@ use std::{
     path::Path,
 };
 use structures::analytics::Analytic;
-use utils::lines::{process_stdin_lines, process_byte_slice};
+use utils::lines::{process_byte_slice, process_stdin_lines};
 
 // need to rewrite because this is not supporting multi threading really well
 //
@@ -35,6 +35,9 @@ use utils::lines::{process_stdin_lines, process_byte_slice};
 
 fn main() {
     let args = Args::parse();
+    std::io::stdout()
+        .write(format!("program called with args {:?}\n", args).as_bytes())
+        .unwrap();
     let mut analytics_list: Vec<Analytic> = Vec::new();
 
     if args.stdin {
@@ -42,7 +45,7 @@ fn main() {
         // expand with detailed analytics later?
         let stdin = std::io::stdin().lock();
         process_stdin_lines(stdin.lines(), &mut analytics_list);
-        produce_output(analytics_list);
+        produce_output(analytics_list, &args);
         std::process::exit(0);
     }
 
@@ -79,10 +82,10 @@ fn main() {
         process_byte_slice(stdout.as_slice(), &mut analytics_list);
     }
 
-    produce_output(analytics_list);
+    produce_output(analytics_list, &args);
 }
 
-fn produce_output(analytics_list: Vec<Analytic>) {
+fn produce_output(analytics_list: Vec<Analytic>, args: &Args) {
     let mut analytics_collection: HashMap<String, Analytic> = HashMap::new();
 
     for a in analytics_list {
@@ -97,9 +100,21 @@ fn produce_output(analytics_list: Vec<Analytic>) {
     }
 
     let mut stdout = std::io::stdout();
+    let filter_extension = args.filter_extension.is_some();
+    let extension_list: Vec<&[u8]> = args.filter_extension
+        .as_ref()
+        .unwrap()
+        .as_bytes()
+        .split(|&byte| byte == 32)
+        .collect();
 
     for a in analytics_collection.iter() {
         let (extension, analytic) = a;
+        if filter_extension {
+            if is_excluded_extension(&extension, &extension_list) {
+                continue;
+            }
+        }
         stdout
             .write(format!("For {} files\n", extension).as_bytes())
             .unwrap();
@@ -110,4 +125,8 @@ fn produce_output(analytics_list: Vec<Analytic>) {
             .write(format!("\t{} deletions\n", analytic.deletions).as_bytes())
             .unwrap();
     }
+}
+
+fn is_excluded_extension(extension: &str, extension_list: &Vec<&[u8]>) -> bool {
+    return extension_list.contains(&extension.as_bytes());
 }
