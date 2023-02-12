@@ -3,7 +3,10 @@ mod structures;
 
 use crate::cli::args::Args;
 use clap::Parser;
-use std::io::{BufRead, BufReader, Lines, StdinLock};
+use std::{
+    collections::HashMap,
+    io::{BufRead, BufReader, Lines, StdinLock},
+};
 use structures::analytics::Analytic;
 
 // need to rewrite because this is not supporting multi threading really well
@@ -37,6 +40,23 @@ fn main() {
         // do a git log -p in that path
         // analyze the results of that log
     }
+
+    let mut analytics_collection: HashMap<String, Analytic> = HashMap::new();
+
+    for a in analytics_list {
+        let key = a.extension.as_ref().unwrap();
+        analytics_collection
+            .entry(key.into())
+            .and_modify(|existing| {
+                existing.additions += a.additions;
+                existing.deletions += a.deletions;
+            })
+            .or_insert(a);
+    }
+
+    for a in analytics_collection {
+        println!("{:?}", a);
+    }
 }
 
 enum AnalyzeState {
@@ -51,6 +71,7 @@ fn process_stdin_lines<'a>(
     analytics_list: &'a mut Vec<Analytic>,
 ) -> &'a mut Vec<Analytic> {
     let mut state = AnalyzeState::DiffLine;
+    let mut analytic = Analytic::default();
     for line in lines {
         if line.is_err() {
             todo!("error in the line from stdin, handle it gracefully");
@@ -58,39 +79,41 @@ fn process_stdin_lines<'a>(
         match state {
             AnalyzeState::DiffLine => {
                 if is_diff_line(&line) {
-                    println!("{:?}", line);
                     state = AnalyzeState::MinLine;
+                    let ext = find_extension_from_diff(&line.unwrap().as_bytes());
+                    analytic.extension = Some(ext.into());
                 }
-            },
+            }
             AnalyzeState::MinLine => {
                 if is_min_line(&line) {
-                    println!("{:?}", line);
                     state = AnalyzeState::PlusLine;
                 }
-            },
+            }
             AnalyzeState::PlusLine => {
                 if is_plus_line(&line) {
-                    println!("{:?}", line);
                     state = AnalyzeState::Changes;
                 }
-            },
+            }
             AnalyzeState::Changes => {
                 if is_diff_line(&line) {
-                    println!("{:?}", line);
                     state = AnalyzeState::MinLine;
+                    analytics_list.push(analytic);
+                    analytic = Analytic::default();
+                    let ext = find_extension_from_diff(&line.unwrap().as_bytes());
+                    analytic.extension = Some(ext.into());
                     // TODO: do the saving of this analytic in here and continue
                     // with the new diff to analyze
                     continue;
                 }
                 if is_addition(&line) {
-                    println!("{:?}", line);
+                    analytic.additions += 1;
                 } else if is_deletion(&line) {
-                    println!("{:?}", line);
+                    analytic.deletions += 1;
                 }
-            },
+            }
         }
     }
-    println!("final analytic save here");
+    analytics_list.push(analytic);
     return analytics_list;
 }
 
