@@ -6,9 +6,14 @@ pub fn produce_output(analytics_list: Vec<Analytic>, args: &Args) {
     let mut analytics_collection: HashMap<String, Analytic> = HashMap::new();
 
     for a in analytics_list {
-        let key = a.extension.as_ref().unwrap();
+        let key = a.extension.as_ref();
+
+        if key.is_none() {
+            continue;
+        }
+
         analytics_collection
-            .entry(key.into())
+            .entry(key.unwrap().into())
             .and_modify(|existing| {
                 existing.additions += a.additions;
                 existing.deletions += a.deletions;

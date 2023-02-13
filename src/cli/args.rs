@@ -11,4 +11,7 @@ pub struct Args {
 
     #[arg(long)]
     pub filter_extension: Option<String>,
+
+    #[arg(long)]
+    pub command: Option<String>,
 }
