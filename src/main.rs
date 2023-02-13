@@ -6,8 +6,9 @@ use crate::cli::args::Args;
 
 use clap::Parser;
 use std::{
-    io::{BufRead, Write},
+    io::{stderr, stdin, BufRead, Write},
     path::Path,
+    process::exit,
 };
 use structures::analytics::Analytic;
 use utils::{
@@ -22,10 +23,10 @@ fn main() {
     if args.stdin {
         // when stdin is used, no special treatment is needed so far
         // expand with detailed analytics later?
-        let stdin = std::io::stdin().lock();
+        let stdin = stdin().lock();
         process_stdin_lines(stdin.lines(), &mut analytics_list);
         produce_output(analytics_list, &args);
-        std::process::exit(0);
+        exit(0);
     }
 
     if args.path.is_some() {
@@ -33,10 +34,10 @@ fn main() {
         let cwd = std::env::set_current_dir(project_directory);
 
         if cwd.is_err() {
-            std::io::stderr()
+            stderr()
                 .write(format!("could not change into {:?}\n", project_directory).as_bytes())
                 .unwrap();
-            std::process::exit(1);
+            exit(1);
         }
 
         let command = match &args.command {
@@ -50,7 +51,7 @@ fn main() {
             .output();
 
         if cmd.is_err() {
-            std::io::stderr()
+            stderr()
                 .write(
                     format!(
                         "problem with executing {} in the project directory\n",
@@ -59,19 +60,19 @@ fn main() {
                     .as_bytes(),
                 )
                 .unwrap();
-            std::io::stderr()
+            stderr()
                 .write(cmd.unwrap_err().to_string().as_bytes())
                 .unwrap();
-            std::process::exit(1);
+            exit(1);
         }
 
         let stdout = cmd.unwrap().stdout;
 
         if stdout.len() == 0 {
-            std::io::stderr()
+            stderr()
                 .write(format!("command {} produced no output\n", command).as_bytes())
                 .unwrap();
-            std::process::exit(1);
+            exit(1);
         }
 
         process_byte_slice(stdout.as_slice(), &mut analytics_list);
