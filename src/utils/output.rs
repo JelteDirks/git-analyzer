@@ -23,9 +23,9 @@ pub fn produce_output(analytics_list: Vec<Analytic>, args: &Args) {
     }
 
     let mut extension_list: Option<Vec<&[u8]>> = None;
-    if args.exclude.is_some() {
+    if args.include.is_some() || args.exclude.is_some() {
         extension_list = Some(
-            args.exclude
+            args.include
                 .as_ref()
                 .unwrap()
                 .as_bytes()
@@ -37,17 +37,18 @@ pub fn produce_output(analytics_list: Vec<Analytic>, args: &Args) {
     for a in analytics_collection.iter() {
         let (extension, analytic) = a;
         if extension_list.is_some() {
-            if is_excluded_extension(&extension, &extension_list.as_ref().unwrap()) {
+            let included = extension_list.as_ref().unwrap().contains(&extension.as_bytes());
+            if args.include.is_some() && !included {
+                continue;
+            } else if args.exclude.is_some() && included {
                 continue;
             }
         }
         write!(stdout_handle, "for {} files\n", extension).unwrap();
-        write!(stdout_handle, "\t{} additions\n", analytic.additions).unwrap();
-        write!(stdout_handle, "\t{} deletions\n", analytic.deletions).unwrap();
-        stdout_handle.flush().unwrap();
+        write!(stdout_handle, "++ {} additions\n", analytic.additions).unwrap();
+        write!(stdout_handle, "-- {} deletions\n", analytic.deletions).unwrap();
     }
+
+    stdout_handle.flush().unwrap();
 }
 
-fn is_excluded_extension(extension: &str, extension_list: &Vec<&[u8]>) -> bool {
-    return extension_list.contains(&extension.as_bytes());
-}

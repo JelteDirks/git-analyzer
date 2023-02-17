@@ -13,5 +13,8 @@ pub struct Args {
     pub exclude: Option<String>,
 
     #[arg(long)]
+    pub include: Option<String>,
+
+    #[arg(long)]
     pub command: Option<String>,
 }
