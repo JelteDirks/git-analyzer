@@ -4,6 +4,7 @@ use crate::{cli::args::Args, structures::analytics::Analytic};
 
 pub fn produce_output(analytics_list: Vec<Analytic>, args: &Args) {
     let mut analytics_collection: HashMap<String, Analytic> = HashMap::new();
+    let mut stdout_handle = std::io::BufWriter::new(std::io::stdout());
 
     for a in analytics_list {
         let key = a.extension.as_ref();
@@ -21,7 +22,6 @@ pub fn produce_output(analytics_list: Vec<Analytic>, args: &Args) {
             .or_insert(a);
     }
 
-    let mut stdout = std::io::stdout();
     let mut extension_list: Option<Vec<&[u8]>> = None;
     if args.exclude.is_some() {
         extension_list = Some(
@@ -41,15 +41,10 @@ pub fn produce_output(analytics_list: Vec<Analytic>, args: &Args) {
                 continue;
             }
         }
-        stdout
-            .write(format!("For {} files\n", extension).as_bytes())
-            .unwrap();
-        stdout
-            .write(format!("\t{} additions\n", analytic.additions).as_bytes())
-            .unwrap();
-        stdout
-            .write(format!("\t{} deletions\n", analytic.deletions).as_bytes())
-            .unwrap();
+        write!(stdout_handle, "for {} files\n", extension).unwrap();
+        write!(stdout_handle, "\t{} additions\n", analytic.additions).unwrap();
+        write!(stdout_handle, "\t{} deletions\n", analytic.deletions).unwrap();
+        stdout_handle.flush().unwrap();
     }
 }
 
