@@ -23,9 +23,9 @@ pub fn produce_output(analytics_list: Vec<Analytic>, args: &Args) {
 
     let mut stdout = std::io::stdout();
     let mut extension_list: Option<Vec<&[u8]>> = None;
-    if args.filter_extension.is_some() {
+    if args.exclude.is_some() {
         extension_list = Some(
-            args.filter_extension
+            args.exclude
                 .as_ref()
                 .unwrap()
                 .as_bytes()

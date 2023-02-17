@@ -10,7 +10,7 @@ pub struct Args {
     pub path: Option<String>,
 
     #[arg(long)]
-    pub filter_extension: Option<String>,
+    pub exclude: Option<String>,
 
     #[arg(long)]
     pub command: Option<String>,

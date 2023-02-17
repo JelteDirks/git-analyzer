@@ -18,6 +18,7 @@ use utils::{
 
 fn main() {
     let args = Args::parse();
+    let mut err_handle = stderr();
     let mut analytics_list: Vec<Analytic> = Vec::new();
 
     if args.stdin {
@@ -34,9 +35,12 @@ fn main() {
         let cwd = std::env::set_current_dir(project_directory);
 
         if cwd.is_err() {
-            stderr()
-                .write(format!("could not change into {:?}\n", project_directory).as_bytes())
-                .unwrap();
+            write!(
+                err_handle,
+                "could not change directory to {:?}\n",
+                project_directory
+            )
+            .unwrap();
             exit(1);
         }
 
@@ -51,31 +55,38 @@ fn main() {
             .output();
 
         if cmd.is_err() {
-            stderr()
-                .write(
-                    format!(
-                        "problem with executing {} in the project directory\n",
-                        command
-                    )
-                    .as_bytes(),
-                )
-                .unwrap();
-            stderr()
-                .write(cmd.unwrap_err().to_string().as_bytes())
-                .unwrap();
+            write!(
+                err_handle,
+                "problem with executing '{}' in '{}'\n",
+                command,
+                project_directory.to_str().unwrap()
+            )
+            .unwrap();
+            write!(
+                err_handle,
+                "{:?}\n",
+                cmd.unwrap_err().to_string().as_bytes()
+            )
+            .unwrap();
+            err_handle.flush().unwrap();
             exit(1);
         }
 
-        let stdout = cmd.unwrap().stdout;
+        let cmd_stdo = &cmd.as_ref().unwrap().stdout;
+        let cmd_stde = &cmd.as_ref().unwrap().stderr;
 
-        if stdout.len() == 0 {
-            stderr()
-                .write(format!("command {} produced no output\n", command).as_bytes())
-                .unwrap();
+        if cmd_stde.len() > 0 {
+            write!(err_handle, "command '{}' produced errors:\n", command).unwrap();
+            write!(err_handle, "{:?}\n", std::str::from_utf8(cmd_stde).unwrap()).unwrap();
             exit(1);
         }
 
-        process_byte_slice(stdout.as_slice(), &mut analytics_list);
+        if cmd_stdo.len() == 0 {
+            write!(err_handle, "command '{}' produced no output\n", command).unwrap();
+            exit(1);
+        }
+
+        process_byte_slice(cmd_stdo.as_slice(), &mut analytics_list);
     }
 
     produce_output(analytics_list, &args);
