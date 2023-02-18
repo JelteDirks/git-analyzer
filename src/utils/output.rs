@@ -37,7 +37,10 @@ pub fn produce_output(analytics_list: Vec<Analytic>, args: &Args) {
     for a in analytics_collection.iter() {
         let (extension, analytic) = a;
         if extension_list.is_some() {
-            let included = extension_list.as_ref().unwrap().contains(&extension.as_bytes());
+            let included = extension_list
+                .as_ref()
+                .unwrap()
+                .contains(&extension.as_bytes());
             if args.include.is_some() && !included {
                 continue;
             } else if args.exclude.is_some() && included {
@@ -51,4 +54,3 @@ pub fn produce_output(analytics_list: Vec<Analytic>, args: &Args) {
 
     stdout_handle.flush().unwrap();
 }
-
