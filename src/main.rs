@@ -7,7 +7,7 @@ use crate::cli::args::Args;
 use clap::Parser;
 use std::{
     io::{stderr, stdin, stdout, BufRead, Write},
-    path::Path,
+    path::{Path, PathBuf},
     process::exit,
 };
 use structures::analytics::Analytic;
@@ -37,6 +37,7 @@ fn main() {
 
     write!(stdout(), "using command '{}'\n", command).unwrap();
 
+    let project_directory: Option<PathBuf> = None;
     if args.path.is_some() {
         let project_directory = Path::new(args.path.as_ref().unwrap());
         let cwd = std::env::set_current_dir(project_directory);
@@ -52,6 +53,10 @@ fn main() {
         } else {
             write!(stdout(), "analyzing '{}'\n", project_directory.display()).unwrap();
         }
+    }
+
+    if args.depth.is_some() {
+
     }
 
     let cmd = std::process::Command::new("sh")

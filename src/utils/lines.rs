@@ -79,8 +79,6 @@ pub fn process_byte_slice<'a>(
                     analytic = Analytic::default();
                     let ext = find_extension_from_diff(&line.as_bytes());
                     analytic.extension = Some(ext.into());
-                    // TODO: do the saving of this analytic in here and continue
-                    // with the new diff to analyze
                     continue;
                 }
                 if is_addition(&line) {
