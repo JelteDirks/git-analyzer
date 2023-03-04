@@ -19,5 +19,5 @@ pub struct Args {
     pub command: Option<String>,
 
     #[arg(long)]
-    pub depth: Option<u8>,
+    pub depth: Option<u32>,
 }

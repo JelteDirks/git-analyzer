@@ -6,7 +6,7 @@ use crate::cli::args::Args;
 
 use clap::Parser;
 use std::{
-    io::{stderr, stdin, stdout, BufRead, Write},
+    io::{stderr, stdin, stdout, BufRead, Write, BufWriter},
     path::{Path, PathBuf},
     process::exit,
 };
@@ -18,7 +18,7 @@ use utils::{
 
 fn main() {
     let args = Args::parse();
-    let mut err_handle = stderr();
+    let mut err_handle = BufWriter::new(stderr());
     let mut analytics_list: Vec<Analytic> = Vec::new();
 
     if args.stdin {
@@ -37,26 +37,32 @@ fn main() {
 
     write!(stdout(), "using command '{}'\n", command).unwrap();
 
-    let project_directory: Option<PathBuf> = None;
-    if args.path.is_some() {
-        let project_directory = Path::new(args.path.as_ref().unwrap());
-        let cwd = std::env::set_current_dir(project_directory);
+    let path = match args.path.as_ref() {
+        Some(p) => PathBuf::from(p),
+        None => std::env::current_dir().expect("problem getting current dir"),
+    };
 
-        if cwd.is_err() {
-            write!(
-                err_handle,
-                "could not change directory to {:?}\n",
-                project_directory
-            )
-            .unwrap();
+    std::env::set_current_dir(&path)
+        .map_err(|err| {
+            write!(err_handle, "problem setting working dir: {}", err).unwrap();
             exit(1);
-        } else {
-            write!(stdout(), "analyzing '{}'\n", project_directory.display()).unwrap();
+        }).unwrap();
+
+    let depth: u32 = match args.depth {
+        Some(d) => d,
+        None => 0,
+    };
+
+    if depth != 0 {
+        use walkdir::WalkDir;
+
+        let entries = WalkDir::new(&path)
+            .min_depth(depth as usize)
+            .max_depth(depth as usize);
+
+        for entry in entries {
+            dbg!(entry).unwrap();
         }
-    }
-
-    if args.depth.is_some() {
-
     }
 
     let cmd = std::process::Command::new("sh")
