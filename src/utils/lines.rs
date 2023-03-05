@@ -23,12 +23,10 @@ pub fn is_deletion(line: &str) -> bool {
 }
 
 pub fn is_diff_line(line: &str) -> bool {
-    if line.len() < 10 {
-        return false;
-    }
-    if line.get(0..10).unwrap() == "diff --git" {
+    if let Some("diff --git") = line.get(0..10) {
         return true;
     }
+
     return false;
 }
 
