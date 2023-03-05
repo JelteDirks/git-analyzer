@@ -55,6 +55,15 @@ fn main() {
 
     for entry in entries {
 
+        if entry.is_err() {
+            write!(err_handle, "{}", entry.as_ref().err().unwrap()).unwrap();
+            continue;
+        }
+
+        if !entry.as_ref().unwrap().path().is_dir() {
+            continue;
+        }
+
         write!(
             err_handle,
             "checked {}\n",
