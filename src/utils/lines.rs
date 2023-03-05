@@ -1,6 +1,6 @@
 use std::io::{Lines, StdinLock};
 
-use crate::{structures::analytics::Analytic, cli::args};
+use crate::{cli::args, structures::analytics::Analytic};
 
 pub fn is_addition(line: &str) -> bool {
     if line.len() < 1 {
@@ -75,7 +75,6 @@ pub fn process_byte_slice<'a>(
         } else if is_deletion(&line) {
             analytic.deletions += 1;
         }
-
     }
     analytics_list.push(analytic);
     return analytics_list;

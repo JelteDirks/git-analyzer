@@ -7,7 +7,7 @@ use crate::cli::args::Args;
 use clap::Parser;
 use std::{
     io::{stderr, stdin, BufRead, BufWriter, Write},
-    path::{PathBuf, Path},
+    path::{Path, PathBuf},
     process::exit,
 };
 use structures::analytics::Analytic;
@@ -52,7 +52,6 @@ fn main() {
         .max_depth(depth as usize);
 
     for entry in entries {
-
         if entry.is_err() {
             write!(err_handle, "{}", entry.as_ref().err().unwrap()).unwrap();
             continue;
@@ -64,12 +63,7 @@ fn main() {
             continue;
         }
 
-        write!(
-            err_handle,
-            "checked {}\n",
-            path_ref.display()
-        )
-        .unwrap();
+        write!(err_handle, "checked {}\n", path_ref.display()).unwrap();
 
         let cd = std::env::set_current_dir(path_ref);
 
@@ -79,7 +73,8 @@ fn main() {
                 "can not analyze {}: {}\n",
                 path_ref.display(),
                 cd.err().unwrap().to_string()
-            ).unwrap();
+            )
+            .unwrap();
             continue;
         }
 
@@ -95,12 +90,7 @@ fn main() {
                 command
             )
             .unwrap();
-            write!(
-                err_handle,
-                "{}\n",
-                cmd.unwrap_err().to_string()
-            )
-            .unwrap();
+            write!(err_handle, "{}\n", cmd.unwrap_err().to_string()).unwrap();
             err_handle.flush().unwrap();
             exit(1);
         }
