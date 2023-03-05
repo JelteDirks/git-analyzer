@@ -2,7 +2,7 @@ use std::io::{Lines, StdinLock};
 
 use crate::{cli::args, structures::analytics::Analytic};
 
-use super::settings::Settings;
+use super::settings::{FilterType, Settings};
 
 pub fn is_addition(line: &str) -> bool {
     if line.len() < 1 {
@@ -43,11 +43,6 @@ pub fn find_extension_from_diff(diff_line: &[u8]) -> String {
     return "unknown".into();
 }
 
-enum AnalyzeState {
-    DiffLine,
-    Changes,
-}
-
 pub fn process_byte_slice<'a>(
     bytes: &[u8],
     analytics_list: &'a mut Vec<Analytic>,
@@ -55,6 +50,7 @@ pub fn process_byte_slice<'a>(
 ) -> &'a mut Vec<Analytic> {
     let mut analytic = Analytic::default();
     let byte_lines = bytes.split(|&byte| byte == 10);
+    let mut ignore = false;
 
     for byte_line in byte_lines {
         let line_result = std::str::from_utf8(byte_line);
@@ -66,12 +62,32 @@ pub fn process_byte_slice<'a>(
         let line = line_result.unwrap();
 
         if is_diff_line(&line) {
+            let ext = find_extension_from_diff(&line.as_bytes());
+
+            match settings.filter {
+                FilterType::Pass => {}
+                FilterType::Include => {
+                    ignore = settings.extensions.get(&ext.to_string()).is_none();
+                }
+                FilterType::Exclude => {
+                    ignore = *settings.extensions.get(&ext.to_string()).unwrap_or(&false);
+                }
+            }
+
+            if ignore == true {
+                continue;
+            }
+
             analytics_list.push(analytic);
             analytic = Analytic::default();
-            let ext = find_extension_from_diff(&line.as_bytes());
             analytic.extension = Some(ext.into());
             continue;
         }
+
+        if ignore == true {
+            continue;
+        }
+
         if is_addition(&line) {
             analytic.additions += 1;
         } else if is_deletion(&line) {
