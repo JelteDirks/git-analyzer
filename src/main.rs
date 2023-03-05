@@ -6,9 +6,8 @@ use crate::cli::args::Args;
 
 use clap::Parser;
 use std::{
-    fs::DirEntry,
-    io::{stderr, stdin, stdout, BufRead, BufWriter, Write},
-    path::{Path, PathBuf},
+    io::{stderr, stdin, BufRead, BufWriter, Write},
+    path::{PathBuf, Path},
     process::exit,
 };
 use structures::analytics::Analytic;
@@ -21,7 +20,6 @@ use walkdir::WalkDir;
 fn main() {
     let args = Args::parse();
     let mut err_handle = BufWriter::new(stderr());
-    let mut out_stream = BufWriter::new(stdout());
 
     let mut analytics_list: Vec<Analytic> = Vec::new();
 
@@ -60,24 +58,26 @@ fn main() {
             continue;
         }
 
-        if !entry.as_ref().unwrap().path().is_dir() {
+        let path_ref: &Path = entry.as_ref().unwrap().path();
+
+        if !path_ref.is_dir() {
             continue;
         }
 
         write!(
             err_handle,
             "checked {}\n",
-            entry.as_ref().unwrap().path().display()
+            path_ref.display()
         )
         .unwrap();
 
-        let cd = std::env::set_current_dir(&entry.as_ref().unwrap().path());
+        let cd = std::env::set_current_dir(path_ref);
 
         if cd.is_err() {
             write!(
                 err_handle,
                 "can not analyze {}: {}\n",
-                &entry.as_ref().unwrap().path().display(),
+                path_ref.display(),
                 cd.err().unwrap().to_string()
             ).unwrap();
             continue;
@@ -97,8 +97,8 @@ fn main() {
             .unwrap();
             write!(
                 err_handle,
-                "{:?}\n",
-                cmd.unwrap_err().to_string().as_bytes()
+                "{}\n",
+                cmd.unwrap_err().to_string()
             )
             .unwrap();
             err_handle.flush().unwrap();
@@ -113,7 +113,7 @@ fn main() {
                 err_handle,
                 "command '{}' produced errors in {}:\n",
                 command,
-                entry.as_ref().unwrap().path().display()
+                path_ref.display()
             )
             .unwrap();
             write!(err_handle, "{:?}\n", std::str::from_utf8(cmd_stde).unwrap()).unwrap();
@@ -125,7 +125,7 @@ fn main() {
                 err_handle,
                 "command '{}' produced no output in {}\n",
                 command,
-                entry.as_ref().unwrap().path().display()
+                path_ref.display()
             )
             .unwrap();
             err_handle.flush().unwrap();

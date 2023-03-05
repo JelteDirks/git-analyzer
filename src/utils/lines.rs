@@ -1,6 +1,6 @@
 use std::io::{Lines, StdinLock};
 
-use crate::structures::analytics::Analytic;
+use crate::{structures::analytics::Analytic, cli::args};
 
 pub fn is_addition(line: &str) -> bool {
     if line.len() < 1 {
@@ -63,33 +63,24 @@ pub fn process_byte_slice<'a>(
 
         let line = line_result.unwrap();
 
-        match state {
-            AnalyzeState::DiffLine => {
-                if is_diff_line(&line) {
-                    state = AnalyzeState::Changes;
-                    let ext = find_extension_from_diff(&line.as_bytes());
-                    analytic.extension = Some(ext.into());
-                }
-            }
-            AnalyzeState::Changes => {
-                if is_diff_line(&line) {
-                    analytics_list.push(analytic);
-                    analytic = Analytic::default();
-                    let ext = find_extension_from_diff(&line.as_bytes());
-                    analytic.extension = Some(ext.into());
-                    continue;
-                }
-                if is_addition(&line) {
-                    analytic.additions += 1;
-                } else if is_deletion(&line) {
-                    analytic.deletions += 1;
-                }
-            }
+        if is_diff_line(&line) {
+            analytics_list.push(analytic);
+            analytic = Analytic::default();
+            let ext = find_extension_from_diff(&line.as_bytes());
+            analytic.extension = Some(ext.into());
+            continue;
         }
+        if is_addition(&line) {
+            analytic.additions += 1;
+        } else if is_deletion(&line) {
+            analytic.deletions += 1;
+        }
+
     }
     analytics_list.push(analytic);
     return analytics_list;
 }
+
 pub fn process_stdin_lines<'a>(
     lines: Lines<StdinLock>,
     analytics_list: &'a mut Vec<Analytic>,
