@@ -67,7 +67,7 @@ fn main() {
         if cd.is_err() {
             write!(
                 err_handle,
-                "can not analyze {}: {}",
+                "can not analyze {}: {}\n",
                 &entry.as_ref().unwrap().path().display(),
                 cd.err().unwrap().to_string()
             ).unwrap();
