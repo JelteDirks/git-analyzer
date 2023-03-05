@@ -11,45 +11,21 @@ use std::{
     process::exit,
 };
 use structures::analytics::Analytic;
-use utils::{
-    lines::{process_byte_slice, process_stdin_lines},
-    output::produce_output,
-};
+use utils::{lines::process_byte_slice, output::produce_output, settings::Settings};
 use walkdir::WalkDir;
 
 fn main() {
     let args = Args::parse();
+
+    let settings: Settings = Settings::from_args(args);
+
     let mut err_handle = BufWriter::new(stderr());
 
     let mut analytics_list: Vec<Analytic> = Vec::new();
 
-    if args.stdin {
-        // when stdin is used, no special treatment is needed so far
-        // expand with detailed analytics later?
-        let stdin = stdin().lock();
-        process_stdin_lines(stdin.lines(), &mut analytics_list);
-        produce_output(analytics_list, &args);
-        exit(0);
-    }
-
-    let command = match &args.command {
-        Some(c) => c.to_string(),
-        None => "git log -p".to_string(),
-    };
-
-    let path = match args.path.as_ref() {
-        Some(p) => PathBuf::from(p),
-        None => std::env::current_dir().expect("problem getting current dir"),
-    };
-
-    let depth: u32 = match args.depth {
-        Some(d) => d,
-        None => 0,
-    };
-
-    let entries = WalkDir::new(&path)
-        .min_depth(depth as usize)
-        .max_depth(depth as usize);
+    let entries = WalkDir::new(&settings.path)
+        .min_depth(settings.depth as usize)
+        .max_depth(settings.depth as usize);
 
     for entry in entries {
         if entry.is_err() {
@@ -80,14 +56,14 @@ fn main() {
 
         let cmd = std::process::Command::new("sh")
             .arg("-c")
-            .arg(&command)
+            .arg(&settings.command)
             .output();
 
         if cmd.is_err() {
             write!(
                 err_handle,
                 "problem with executing '{}' in the working directory chosen\n",
-                command
+                &settings.command
             )
             .unwrap();
             write!(err_handle, "{}\n", cmd.unwrap_err().to_string()).unwrap();
@@ -102,7 +78,7 @@ fn main() {
             write!(
                 err_handle,
                 "command '{}' produced errors in {}:\n",
-                command,
+                &settings.command,
                 path_ref.display()
             )
             .unwrap();
@@ -114,7 +90,7 @@ fn main() {
             write!(
                 err_handle,
                 "command '{}' produced no output in {}\n",
-                command,
+                &settings.command,
                 path_ref.display()
             )
             .unwrap();
@@ -122,10 +98,12 @@ fn main() {
             continue;
         }
 
-        process_byte_slice(cmd_stdo.as_slice(), &mut analytics_list);
+        process_byte_slice(cmd_stdo.as_slice(), &mut analytics_list, &settings);
     }
 
-    produce_output(analytics_list, &args);
+    produce_output(analytics_list);
+
+    dbg!(settings);
 
     err_handle.flush().unwrap();
 }
