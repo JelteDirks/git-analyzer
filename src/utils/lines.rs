@@ -1,7 +1,4 @@
-use std::io::{Lines, StdinLock};
-
-use crate::{cli::args, structures::analytics::Analytic};
-
+use crate::structures::analytics::Analytic;
 use super::settings::{FilterType, Settings};
 
 pub fn is_addition(line: &str) -> bool {
@@ -94,6 +91,7 @@ pub fn process_byte_slice<'a>(
             analytic.deletions += 1;
         }
     }
+
     analytics_list.push(analytic);
     return analytics_list;
 }

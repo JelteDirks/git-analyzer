@@ -6,9 +6,8 @@ use crate::cli::args::Args;
 
 use clap::Parser;
 use std::{
-    io::{stderr, stdin, BufRead, BufWriter, Write},
-    path::{Path, PathBuf},
-    process::exit,
+    io::{stderr, BufWriter, Write},
+    process::exit, path::Path,
 };
 use structures::analytics::Analytic;
 use utils::{lines::process_byte_slice, output::produce_output, settings::Settings};
@@ -23,7 +22,9 @@ fn main() {
 
     let mut analytics_list: Vec<Analytic> = Vec::new();
 
-    let entries = WalkDir::new(&settings.path)
+    dbg!(&settings);
+
+    let entries = WalkDir::new(&settings.path.to_owned())
         .min_depth(settings.depth as usize)
         .max_depth(settings.depth as usize);
 
@@ -33,7 +34,11 @@ fn main() {
             continue;
         }
 
+        dbg!(&entry);
+
         let path_ref: &Path = entry.as_ref().unwrap().path();
+
+        dbg!(&path_ref);
 
         if !path_ref.is_dir() {
             continue;
@@ -102,8 +107,6 @@ fn main() {
     }
 
     produce_output(analytics_list);
-
-    dbg!(settings);
 
     err_handle.flush().unwrap();
 }
