@@ -7,7 +7,7 @@ use crate::cli::args::Args;
 use clap::Parser;
 use std::{
     io::{stderr, BufWriter, Write},
-    process::exit, path::Path,
+    path::Path,
 };
 use structures::analytics::Analytic;
 use utils::{lines::process_byte_slice, output::produce_output, settings::Settings};
@@ -24,27 +24,23 @@ fn main() {
 
     dbg!(&settings);
 
-    let entries = WalkDir::new(&settings.path.to_owned())
+    let canon = std::fs::canonicalize(&settings.path);
+
+    let entries = WalkDir::new(canon.unwrap())
         .min_depth(settings.depth as usize)
         .max_depth(settings.depth as usize);
 
-    for entry in entries {
+    for entry in entries.into_iter() {
         if entry.is_err() {
-            write!(err_handle, "{}", entry.as_ref().err().unwrap()).unwrap();
+            write!(err_handle, "{}\n", entry.as_ref().err().unwrap()).unwrap();
             continue;
         }
 
-        dbg!(&entry);
-
         let path_ref: &Path = entry.as_ref().unwrap().path();
-
-        dbg!(&path_ref);
 
         if !path_ref.is_dir() {
             continue;
         }
-
-        write!(err_handle, "checked {}\n", path_ref.display()).unwrap();
 
         let cd = std::env::set_current_dir(path_ref);
 
@@ -67,13 +63,11 @@ fn main() {
         if cmd.is_err() {
             write!(
                 err_handle,
-                "problem with executing '{}' in the working directory chosen\n",
+                "problem with executing '{}' in the working directory chosen: ",
                 &settings.command
-            )
-            .unwrap();
+            ) .unwrap();
             write!(err_handle, "{}\n", cmd.unwrap_err().to_string()).unwrap();
-            err_handle.flush().unwrap();
-            exit(1);
+            continue;
         }
 
         let cmd_stdo = &cmd.as_ref().unwrap().stdout;
@@ -104,6 +98,8 @@ fn main() {
         }
 
         process_byte_slice(cmd_stdo.as_slice(), &mut analytics_list, &settings);
+
+        write!(err_handle, "checked {}\n", path_ref.display()).unwrap();
     }
 
     produce_output(analytics_list);
