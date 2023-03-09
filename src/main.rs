@@ -7,7 +7,7 @@ use crate::cli::args::Args;
 use clap::Parser;
 use std::{
     io::{stderr, BufWriter, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 use structures::analytics::Analytic;
 use utils::{output::produce_output, settings::Settings};
@@ -29,17 +29,29 @@ fn main() {
         .min_depth(settings.depth as usize)
         .max_depth(settings.depth as usize);
 
+    let mut thread_handles = Vec::new();
+
     for entry in entries.into_iter() {
         if entry.is_err() {
             write!(err_handle, "{}\n", entry.as_ref().err().unwrap()).unwrap();
             continue;
         }
 
-        let path_ref: &Path = entry.as_ref().unwrap().path();
+        let path_ref: PathBuf = entry.as_ref().unwrap().path().to_path_buf();
 
         if !path_ref.is_dir() {
             continue;
         }
+
+        let t_handle = thread::spawn(move || {
+            dbg!(path_ref);
+        });
+
+        thread_handles.push(t_handle);
+    }
+
+    for t_handle in thread_handles.into_iter() {
+        t_handle.join().unwrap();
     }
 
     produce_output(analytics_list);
