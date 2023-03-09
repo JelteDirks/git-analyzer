@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.0.32", features = ["derive"] }
 walkdir = "2.3.2"
+
+[profile.release]
+debug = true
