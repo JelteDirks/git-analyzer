@@ -22,7 +22,7 @@ fn main() {
     let args = Args::parse();
 
     let s = Box::new(Settings::from_args(args));
-    let settings: &'static Settings = Box::leak(s);
+    let settings: &'static mut Settings = Box::leak(s);
 
     let mut err_handle = BufWriter::new(stderr());
 
@@ -76,6 +76,7 @@ fn analyze(mut anset: AnalyzeSettings) {
         .arg(&anset.path)
         .arg("log")
         .arg("-p")
+        .args(&mut anset.settings.flags.split(' '))
         .output();
 
     if output.is_err() {

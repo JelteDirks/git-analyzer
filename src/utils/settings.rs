@@ -13,7 +13,7 @@ pub struct Settings {
     pub filter: FilterType,
     pub base: PathBuf,
     pub depth: u32,
-    pub command: String,
+    pub flags: String,
 }
 
 impl Settings {
@@ -41,16 +41,16 @@ impl Settings {
                 });
         }
 
-        let mut command = Settings::default_command();
+        let mut flags = Settings::default_command();
 
-        if args.command.is_some() {
-            command = args.command.unwrap();
+        if args.flags.is_some() {
+            flags = args.flags.unwrap();
         }
 
-        let mut path = Settings::default_base();
+        let mut base = Settings::default_base();
 
         if args.path.is_some() {
-            path = std::fs::canonicalize(args.path.unwrap()).unwrap();
+            base = std::fs::canonicalize(args.path.unwrap()).unwrap();
         }
 
         let mut depth = Settings::default_depth();
@@ -62,8 +62,8 @@ impl Settings {
         return Settings {
             extensions,
             filter,
-            command,
-            base: path,
+            flags,
+            base,
             depth,
         };
     }

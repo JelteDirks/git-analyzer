@@ -3,21 +3,18 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 pub struct Args {
-    #[arg(short = 'i', long)]
-    pub stdin: bool,
-
     #[arg(short = 'p', long)]
     pub path: Option<String>,
 
-    #[arg(long)]
+    #[arg(short = 'e', long)]
     pub exclude: Option<String>,
 
-    #[arg(long)]
+    #[arg(short = 'i', long)]
     pub include: Option<String>,
 
     #[arg(long)]
-    pub command: Option<String>,
+    pub flags: Option<String>,
 
-    #[arg(long)]
+    #[arg(short = 'd', long)]
     pub depth: Option<u32>,
 }
