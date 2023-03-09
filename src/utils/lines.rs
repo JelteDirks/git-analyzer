@@ -6,11 +6,11 @@ pub fn is_addition(line: &str) -> bool {
         return false;
     }
     if line.get(0..1).unwrap() == "+" {
-        return if line.len() >= 5 {
-            line.get(0..5).unwrap() != "+++ b"
+        if line.get(0..5).is_some() {
+            return line.get(0..5).unwrap() != "+++ b";
         } else {
-            true
-        };
+            return true;
+        }
     }
     return false;
 }
@@ -20,11 +20,11 @@ pub fn is_deletion(line: &str) -> bool {
         return false;
     }
     if line.get(0..1).unwrap() == "-" {
-        return if line.len() >= 5 {
-            line.get(0..5).unwrap() != "--- a"
+        if line.get(0..5).is_some() {
+            return line.get(0..5).unwrap() != "--- a";
         } else {
-            true
-        };
+            return true;
+        }
     }
     return false;
 }
