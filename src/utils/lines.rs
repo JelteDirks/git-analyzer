@@ -48,11 +48,11 @@ pub fn find_extension_from_diff(diff_line: &[u8]) -> String {
     return "unknown".into();
 }
 
-pub fn process_byte_slice<'a>(
+pub fn process_byte_slice(
     bytes: &[u8],
-    analytics_list: &'a mut Vec<Analytic>,
+    analytics_list: &mut Vec<Analytic>,
     settings: &Settings,
-) -> &'a mut Vec<Analytic> {
+) {
     let mut analytic = Analytic::default();
     let byte_lines = bytes.split(|&byte| byte == 10);
     let mut ignore = false;
@@ -101,5 +101,4 @@ pub fn process_byte_slice<'a>(
     }
 
     analytics_list.push(analytic);
-    return analytics_list;
 }
