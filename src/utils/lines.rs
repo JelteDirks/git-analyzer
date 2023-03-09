@@ -1,5 +1,5 @@
-use crate::structures::analytics::Analytic;
 use super::settings::{FilterType, Settings};
+use crate::structures::analytics::Analytic;
 
 pub fn is_addition(line: &str) -> bool {
     if line.len() < 1 {

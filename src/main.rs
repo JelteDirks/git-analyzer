@@ -10,8 +10,9 @@ use std::{
     path::Path,
 };
 use structures::analytics::Analytic;
-use utils::{lines::process_byte_slice, output::produce_output, settings::Settings};
+use utils::{output::produce_output, settings::Settings};
 use walkdir::WalkDir;
+use std::thread;
 
 fn main() {
     let args = Args::parse();
@@ -20,7 +21,7 @@ fn main() {
 
     let mut err_handle = BufWriter::new(stderr());
 
-    let mut analytics_list: Vec<Analytic> = Vec::new();
+    let mut analytics_list: Vec<Analytic> = Vec::with_capacity(1_000);
 
     dbg!(&settings);
 
@@ -41,65 +42,6 @@ fn main() {
         if !path_ref.is_dir() {
             continue;
         }
-
-        let cd = std::env::set_current_dir(path_ref);
-
-        if cd.is_err() {
-            write!(
-                err_handle,
-                "can not analyze {}: {}\n",
-                path_ref.display(),
-                cd.err().unwrap().to_string()
-            )
-            .unwrap();
-            continue;
-        }
-
-        let cmd = std::process::Command::new("sh")
-            .arg("-c")
-            .arg(&settings.command)
-            .output();
-
-        if cmd.is_err() {
-            write!(
-                err_handle,
-                "problem with executing '{}' in the working directory chosen: ",
-                &settings.command
-            ) .unwrap();
-            write!(err_handle, "{}\n", cmd.unwrap_err().to_string()).unwrap();
-            continue;
-        }
-
-        let cmd_stdo = &cmd.as_ref().unwrap().stdout;
-        let cmd_stde = &cmd.as_ref().unwrap().stderr;
-
-        if cmd_stde.len() > 0 {
-            write!(
-                err_handle,
-                "command '{}' produced errors in {}:\n",
-                &settings.command,
-                path_ref.display()
-            )
-            .unwrap();
-            write!(err_handle, "{:?}\n", std::str::from_utf8(cmd_stde).unwrap()).unwrap();
-            continue;
-        }
-
-        if cmd_stdo.len() == 0 {
-            write!(
-                err_handle,
-                "command '{}' produced no output in {}\n",
-                &settings.command,
-                path_ref.display()
-            )
-            .unwrap();
-            err_handle.flush().unwrap();
-            continue;
-        }
-
-        process_byte_slice(cmd_stdo.as_slice(), &mut analytics_list, &settings);
-
-        write!(err_handle, "checked {}\n", path_ref.display()).unwrap();
     }
 
     produce_output(analytics_list);

@@ -1,5 +1,5 @@
-use std::{collections::HashMap, io::Write};
 use crate::structures::analytics::Analytic;
+use std::{collections::HashMap, io::Write};
 
 pub fn produce_output(analytics_list: Vec<Analytic>) {
     let mut analytics_collection: HashMap<String, Analytic> = HashMap::new();
