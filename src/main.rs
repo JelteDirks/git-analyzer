@@ -17,7 +17,8 @@ use std::thread;
 fn main() {
     let args = Args::parse();
 
-    let settings: Settings = Settings::from_args(args);
+    let s = Box::new(Settings::from_args(args));
+    let settings = Box::leak(s);
 
     let mut err_handle = BufWriter::new(stderr());
 
@@ -44,10 +45,10 @@ fn main() {
             continue;
         }
 
-        let an_set = AnalyzeSettings::build(path_buf, settings.command.clone(), Arc::clone(&arc_list));
+        let anset = AnalyzeSettings::build(path_buf, &settings.command, Arc::clone(&arc_list));
 
         let t_handle = thread::spawn(move || {
-            dbg!(an_set);
+            analyze(anset);
         });
 
         thread_handles.push(t_handle);
@@ -60,15 +61,18 @@ fn main() {
     err_handle.flush().unwrap();
 }
 
+fn analyze(anset: AnalyzeSettings) {
+}
+
 #[derive(Debug)]
-struct AnalyzeSettings {
+struct AnalyzeSettings<'a> {
     path: PathBuf,
-    command: String,
+    command: &'a str,
     list: Arc<Mutex<Vec<Analytic>>>,
 }
 
-impl AnalyzeSettings {
-    fn build(path: PathBuf, command: String, list: Arc<Mutex<Vec<Analytic>>>) -> Self {
+impl<'a> AnalyzeSettings<'a> {
+    fn build(path: PathBuf, command: &'a str, list: Arc<Mutex<Vec<Analytic>>>) -> Self {
         return AnalyzeSettings {
             path,
             command,
