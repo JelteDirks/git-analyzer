@@ -25,9 +25,8 @@ fn main() {
     let settings: &'static Settings = Box::leak(s);
 
     let mut err_handle = BufWriter::new(stderr());
-    let mut arc_list: Arc<Mutex<Vec<Analytic>>> = Arc::new(Mutex::new(Vec::with_capacity(1_000)));
 
-    dbg!(&settings);
+    let arc_list: Arc<Mutex<Vec<Analytic>>> = Arc::new(Mutex::new(Vec::with_capacity(1_000)));
 
     let entries = WalkDir::new(&settings.base)
         .min_depth(settings.depth as usize)

@@ -25,9 +25,6 @@ impl Analytic {
         default.additions = a.additions;
         default.deletions = a.deletions;
 
-        dbg!(a);
-        dbg!(&default);
-
         return default;
     }
 }
