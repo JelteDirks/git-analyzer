@@ -25,9 +25,7 @@ fn main() {
 
     dbg!(&settings);
 
-    let canon = std::fs::canonicalize(&settings.path);
-
-    let entries = WalkDir::new(canon.unwrap())
+    let entries = WalkDir::new(&settings.path)
         .min_depth(settings.depth as usize)
         .max_depth(settings.depth as usize);
 

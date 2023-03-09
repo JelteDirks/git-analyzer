@@ -50,7 +50,7 @@ impl Settings {
         let mut path = Settings::default_path();
 
         if args.path.is_some() {
-            path = args.path.unwrap().into();
+            path = std::fs::canonicalize(args.path.unwrap()).unwrap();
         }
 
         let mut depth = Settings::default_depth();
