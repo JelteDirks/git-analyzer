@@ -66,16 +66,18 @@ fn main() {
     err_handle.flush().unwrap();
 }
 
-fn analyze(anset: AnalyzeSettings) {
+fn analyze(mut anset: AnalyzeSettings) {
     let mut err_handle = stderr();
 
-    let cd = std::env::set_current_dir(anset.path);
-    if cd.is_err() {
-        write!(err_handle, "{}\n", cd.err().unwrap()).unwrap();
-        return;
-    }
+    anset.path.push(".git");
 
-    let output = Command::new("sh").arg("-c").arg(&anset.settings.command).output();
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(&anset.path)
+        .arg("log")
+        .arg("-p")
+        .output();
+
     if output.is_err() {
         write!(err_handle, "{}\n", output.err().unwrap()).unwrap();
         return;

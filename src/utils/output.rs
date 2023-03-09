@@ -1,11 +1,11 @@
 use crate::structures::analytics::Analytic;
 use std::{collections::HashMap, io::Write};
 
-pub fn produce_output(analytics_list: &Vec<Analytic>) {
+pub fn produce_output(list: &Vec<Analytic>) {
     let mut analytics_collection: HashMap<String, Analytic> = HashMap::new();
     let mut stdout_handle = std::io::BufWriter::new(std::io::stdout());
 
-    for a in analytics_list {
+    for a in list {
         let key = a.extension.as_ref();
 
         if key.is_none() {
