@@ -1,7 +1,7 @@
 use crate::structures::analytics::Analytic;
 use std::{collections::HashMap, io::Write};
 
-pub fn produce_output(analytics_list: Vec<Analytic>) {
+pub fn produce_output(analytics_list: &Vec<Analytic>) {
     let mut analytics_collection: HashMap<String, Analytic> = HashMap::new();
     let mut stdout_handle = std::io::BufWriter::new(std::io::stdout());
 
@@ -18,15 +18,15 @@ pub fn produce_output(analytics_list: Vec<Analytic>) {
                 existing.additions += a.additions;
                 existing.deletions += a.deletions;
             })
-            .or_insert(a);
+            .or_insert(Analytic::from_ref(a));
     }
 
     for a in analytics_collection.iter() {
         let (extension, analytic) = a;
 
         write!(stdout_handle, "for {} files\n", extension).unwrap();
-        write!(stdout_handle, "++ {} additions\n", analytic.additions).unwrap();
-        write!(stdout_handle, "-- {} deletions\n", analytic.deletions).unwrap();
+        write!(stdout_handle, "+++ {} additions\n", analytic.additions).unwrap();
+        write!(stdout_handle, "--- {} deletions\n", analytic.deletions).unwrap();
     }
 
     stdout_handle.flush().unwrap();

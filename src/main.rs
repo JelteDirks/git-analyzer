@@ -6,6 +6,7 @@ use crate::cli::args::Args;
 
 use clap::Parser;
 use utils::lines::process_byte_slice;
+use std::ops::Deref;
 use std::process::Command;
 use std::thread;
 use std::{
@@ -58,6 +59,10 @@ fn main() {
     for t_handle in thread_handles.into_iter() {
         t_handle.join().unwrap();
     }
+
+    let locked = arc_list.lock().expect("error locking analyzed content");
+
+    produce_output(locked.deref());
 
     err_handle.flush().unwrap();
 }
