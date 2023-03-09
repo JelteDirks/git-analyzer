@@ -11,7 +11,7 @@ pub enum FilterType {
 pub struct Settings {
     pub extensions: HashMap<String, bool>,
     pub filter: FilterType,
-    pub path: PathBuf,
+    pub base: PathBuf,
     pub depth: u32,
     pub command: String,
 }
@@ -47,7 +47,7 @@ impl Settings {
             command = args.command.unwrap();
         }
 
-        let mut path = Settings::default_path();
+        let mut path = Settings::default_base();
 
         if args.path.is_some() {
             path = std::fs::canonicalize(args.path.unwrap()).unwrap();
@@ -63,12 +63,12 @@ impl Settings {
             extensions,
             filter,
             command,
-            path,
+            base: path,
             depth,
         };
     }
 
-    fn default_path() -> PathBuf {
+    fn default_base() -> PathBuf {
         return std::env::current_dir().expect("could not get current dir");
     }
 

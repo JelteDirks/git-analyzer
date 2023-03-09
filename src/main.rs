@@ -25,7 +25,7 @@ fn main() {
 
     dbg!(&settings);
 
-    let entries = WalkDir::new(&settings.path)
+    let entries = WalkDir::new(&settings.base)
         .min_depth(settings.depth as usize)
         .max_depth(settings.depth as usize);
 
@@ -37,7 +37,7 @@ fn main() {
             continue;
         }
 
-        let path_ref: PathBuf = entry.as_ref().unwrap().path().to_path_buf();
+        let path_ref: PathBuf = entry.unwrap().path().to_path_buf();
 
         if !path_ref.is_dir() {
             continue;
