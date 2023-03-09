@@ -5,25 +5,26 @@ mod utils;
 use crate::cli::args::Args;
 
 use clap::Parser;
+use utils::lines::process_byte_slice;
+use std::process::Command;
+use std::thread;
 use std::{
     io::{stderr, BufWriter, Write},
-    path::PathBuf, sync::{Mutex, Arc},
+    path::PathBuf,
+    sync::{Arc, Mutex},
 };
 use structures::analytics::Analytic;
 use utils::{output::produce_output, settings::Settings};
 use walkdir::WalkDir;
-use std::thread;
 
 fn main() {
     let args = Args::parse();
 
     let s = Box::new(Settings::from_args(args));
-    let settings = Box::leak(s);
+    let settings: &'static Settings = Box::leak(s);
 
     let mut err_handle = BufWriter::new(stderr());
-
-    let mut analytics_list: Vec<Analytic> = Vec::with_capacity(1_000);
-    let mut arc_list = Arc::new(Mutex::new(analytics_list));
+    let mut arc_list: Arc<Mutex<Vec<Analytic>>> = Arc::new(Mutex::new(Vec::with_capacity(1_000)));
 
     dbg!(&settings);
 
@@ -45,7 +46,7 @@ fn main() {
             continue;
         }
 
-        let anset = AnalyzeSettings::build(path_buf, &settings.command, Arc::clone(&arc_list));
+        let anset = AnalyzeSettings::build(path_buf, Arc::clone(&arc_list), settings);
 
         let t_handle = thread::spawn(move || {
             analyze(anset);
@@ -62,21 +63,41 @@ fn main() {
 }
 
 fn analyze(anset: AnalyzeSettings) {
+    let mut err_handle = stderr();
+
+    let cd = std::env::set_current_dir(anset.path);
+    if cd.is_err() {
+        write!(err_handle, "{}\n", cd.err().unwrap()).unwrap();
+        return;
+    }
+
+    let output = Command::new("sh").arg("-c").arg(&anset.settings.command).output();
+    if output.is_err() {
+        write!(err_handle, "{}\n", output.err().unwrap()).unwrap();
+        return;
+    }
+
+    let mut local: Vec<Analytic> = Vec::with_capacity(100);
+
+    process_byte_slice(&output.unwrap().stdout, &mut local, anset.settings);
+
+    let mut locked_list = anset.list.lock().expect("error inside critical section");
+    locked_list.append(&mut local);
 }
 
 #[derive(Debug)]
 struct AnalyzeSettings<'a> {
     path: PathBuf,
-    command: &'a str,
     list: Arc<Mutex<Vec<Analytic>>>,
+    settings: &'a Settings,
 }
 
 impl<'a> AnalyzeSettings<'a> {
-    fn build(path: PathBuf, command: &'a str, list: Arc<Mutex<Vec<Analytic>>>) -> Self {
+    fn build(path: PathBuf, list: Arc<Mutex<Vec<Analytic>>>, settings: &'a Settings) -> Self {
         return AnalyzeSettings {
             path,
-            command,
             list,
-        }
+            settings,
+        };
     }
 }
