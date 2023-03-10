@@ -71,6 +71,8 @@ fn analyze(mut anset: AnalyzeSettings) {
 
     anset.path.push(".git");
 
+    // TODO: add tokio async IO to process the input as soon as it comes from
+    // git log. probably througha  bufreader?
     let output = Command::new("git")
         .arg("-C")
         .arg(&anset.path)
