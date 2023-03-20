@@ -98,3 +98,15 @@ Example
 cargo run -- --include "c rs"
 ```
 includes only `.c` and `.rs` files in the output.
+
+## author
+This options limits the analyzing to only objects that are creatd by the given
+author. It is similar to the `--author [AUTHOR]` flag for `git log`. The filtering
+is a little loose, so make sure that you know what results the filtered author
+will give you.
+
+Example
+```zsh
+cargo run -- --author deez
+```
+will only include objects created by deez.
