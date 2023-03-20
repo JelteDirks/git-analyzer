@@ -8,7 +8,8 @@ interest, I might do a better job at that. The documentation might not be up-to-
 for aforementioned reasons.
 
 The help message might already give you some hints hints, and probably saves
-many of you some reading time if you actually want to read this.
+many of you some reading time if you actually want to read this. I won't publish
+it to cargo (yet?) so everything is based on running it with cargo.
 ``` text
 Usage: git-analyzer [OPTIONS]
 
@@ -22,3 +23,57 @@ Options:
   -V, --version            Print version information
 ```
 
+## path
+The path option specifies a directory on the machine to analyze. If only given
+a path, the analyzer finds the .git directory in that path and analyzes all objects
+in that directory.
+
+Example: you are in a directory which looks like this
+```text
+./
+├── .git/
+├── .gitignore
+├── Cargo.lock
+├── Cargo.toml
+├── docs/
+├── readme.md
+├── src/
+└── tmp/
+```
+and you run the following:
+```zsh
+cargo run -- --path $PWD
+```
+you will analyze the current directory, and thus the .git folder in the this
+directory.
+
+## depth
+The depth option specifies an exact depth relative to the given path or default
+path. The analyzer recurses down every directory and analyzes only those 
+directories that are at the exact depth relative to the given path or default path.
+
+Example:
+If you run 
+```zsh
+cargo run -- --path $PWD --depth 2
+```
+in a directory that looks like this
+```text
+./
+├── four/
+│   ├── .git/
+│   └── five/
+│       └── .git/
+└── one/
+    ├── three/
+    │   └── .git/
+    └── two/
+        └── .git/
+```
+you will analyze the following `.git` directories
+```text
+./one/two/.git
+./one/three/.git
+./four/five/.git
+```
+and NOT `./four/.git/` since --depth is an exact depth.
