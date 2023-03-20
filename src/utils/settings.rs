@@ -13,7 +13,7 @@ pub struct Settings {
     pub filter: FilterType,
     pub base: PathBuf,
     pub depth: u32,
-    pub flags: String,
+    pub author: Option<String>,
 }
 
 impl Settings {
@@ -41,10 +41,10 @@ impl Settings {
                 });
         }
 
-        let mut flags = Settings::default_command();
+        let mut author = None;
 
-        if args.flags.is_some() {
-            flags = args.flags.unwrap();
+        if args.author.is_some() {
+            author = Some(args.author.unwrap());
         }
 
         let mut base = Settings::default_base();
@@ -62,7 +62,7 @@ impl Settings {
         return Settings {
             extensions,
             filter,
-            flags,
+            author,
             base,
             depth,
         };
@@ -74,9 +74,5 @@ impl Settings {
 
     fn default_depth() -> u32 {
         return 0;
-    }
-
-    fn default_command() -> String {
-        return "git log -p".to_string();
     }
 }

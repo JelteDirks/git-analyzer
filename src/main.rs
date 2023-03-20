@@ -5,7 +5,6 @@ mod utils;
 use crate::cli::args::Args;
 
 use clap::Parser;
-use utils::lines::process_byte_slice;
 use std::ops::Deref;
 use std::process::Command;
 use std::thread;
@@ -15,6 +14,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 use structures::analytics::Analytic;
+use utils::lines::process_byte_slice;
 use utils::{output::produce_output, settings::Settings};
 use walkdir::WalkDir;
 
@@ -26,7 +26,7 @@ fn main() {
 
     let mut err_handle = BufWriter::new(stderr());
 
-    let arc_list: Arc<Mutex<Vec<Analytic>>> = Arc::new(Mutex::new(Vec::with_capacity(1_000)));
+    let arc_list: Arc<Mutex<Vec<Analytic>>> = Arc::new(Mutex::new(Vec::with_capacity(1_024)));
 
     let entries = WalkDir::new(&settings.base)
         .min_depth(settings.depth as usize)
@@ -73,13 +73,15 @@ fn analyze(mut anset: AnalyzeSettings) {
 
     // TODO: add tokio async IO to process the input as soon as it comes from
     // git log. probably througha  bufreader?
-    let output = Command::new("git")
-        .arg("-C")
-        .arg(&anset.path)
-        .arg("log")
-        .arg("-p")
-        .args(&mut anset.settings.flags.split(' '))
-        .output();
+    let mut cmd = Command::new("git");
+
+    cmd.arg("-C").arg(&anset.path).arg("log").arg("-p");
+
+    if anset.settings.author.is_some() {
+        cmd.arg("--author").arg(anset.settings.author.as_ref().unwrap());
+    }
+
+    let output = cmd.output();
 
     if output.is_err() {
         write!(err_handle, "{}\n", output.err().unwrap()).unwrap();
