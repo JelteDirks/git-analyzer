@@ -77,3 +77,24 @@ you will analyze the following `.git` directories
 ./four/five/.git
 ```
 and NOT `./four/.git/` since --depth is an exact depth.
+
+## exclude
+This option excludes extensions from the output. The notation is space separated
+so make sure to include the "quotation" marks.
+
+Example
+```zsh
+cargo run -- --exclude "rs md"
+```
+excludes `.rs` and `.md` files.
+
+## include
+This option includes extensions from the output, and ignores all extensions that
+are not in this list. The notation is space separated so make sure to include
+"quotation" marks.
+
+Example
+```zsh
+cargo run -- --include "c rs"
+```
+includes only `.c` and `.rs` files in the output.
