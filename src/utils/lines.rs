@@ -1,3 +1,4 @@
+use std::io::Write;
 use super::settings::{FilterType, Settings};
 use crate::structures::analytics::Analytic;
 
@@ -48,11 +49,7 @@ pub fn find_extension_from_diff(diff_line: &[u8]) -> String {
     return "unknown".into();
 }
 
-pub fn process_byte_slice(
-    bytes: &[u8],
-    analytics_list: &mut Vec<Analytic>,
-    settings: &Settings,
-) {
+pub fn process_byte_slice(bytes: &[u8], analytics_list: &mut Vec<Analytic>, settings: &Settings) {
     let mut analytic = Analytic::default();
     let byte_lines = bytes.split(|&byte| byte == 10);
     let mut ignore = false;
@@ -61,7 +58,13 @@ pub fn process_byte_slice(
         let line_result = std::str::from_utf8(byte_line);
 
         if line_result.is_err() {
-            todo!("error in the line from stdin, handle it gracefully");
+            write!(
+                std::io::stderr(),
+                "problem converting byte line {:?}\n",
+                byte_line
+            )
+            .unwrap();
+            continue;
         }
 
         let line = line_result.unwrap();
